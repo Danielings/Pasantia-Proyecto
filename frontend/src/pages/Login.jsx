@@ -4,11 +4,11 @@ import { FiMail, FiLock, FiCpu } from "react-icons/fi";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ username: "", password: "" });
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (formData.email && formData.password) {
+    if (formData.username && formData.password) {
       navigate("/dashboard");
     }
   };
@@ -36,7 +36,7 @@ export default function Login() {
               <div>
                 <label
                   className="block text-sm font-medium text-gray-700 mb-2"
-                  htmlFor="email"
+                  htmlFor="username"
                 >
                   Usuario
                 </label>
@@ -45,15 +45,15 @@ export default function Login() {
                     <FiMail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="email"
-                    type="email"
+                    id="username"
+                    type="username"
                     required
-                    value={formData.email}
+                    value={formData.username}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setFormData({ ...formData, username: e.target.value })
                     }
                     className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
-                    placeholder="admin@empresa.com"
+                    placeholder="golazo7"
                   />
                 </div>
               </div>

@@ -55,7 +55,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">
-                Total Equipos
+                Total Componentes
               </p>
               <h3 className="text-3xl font-bold text-gray-900">170</h3>
             </div>
