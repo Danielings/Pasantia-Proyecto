@@ -11,6 +11,12 @@ const initialForm = {
   usuario: "",
   password: "",
   rol: "",
+  region: "",
+  estado: "",
+  city: "",
+  branch: "",
+  piso: "",
+  ala: "",
 };
 
 const seedUsers = [
@@ -23,6 +29,12 @@ const seedUsers = [
     telefono: "0414-1234567",
     usuario: "jperez",
     rol: "Admin",
+    region: "Lara",
+    estado: "Lara",
+    city: "Barquisimeto",
+    branch: "Torre 30",
+    piso: "Piso 1",
+    ala: "Ala 1",
   },
   {
     id: 2,
@@ -33,6 +45,12 @@ const seedUsers = [
     telefono: "0424-7654321",
     usuario: "mgomez",
     rol: "Superadmin",
+    region: "Lara",
+    estado: "Lara",
+    city: "Barquisimeto",
+    branch: "Torre 30",
+    piso: "Piso 1",
+    ala: "Ala 1",
   },
 ];
 
@@ -48,6 +66,12 @@ function validate(values) {
     "usuario",
     "password",
     "rol",
+    "region",
+    "estado",
+    "city",
+    "branch",
+    "piso",
+    "ala",
   ];
 
   for (const key of required) {
@@ -118,6 +142,12 @@ export default function RegistroUsuarios() {
         telefono: form.telefono.trim(),
         usuario: form.usuario.trim(),
         rol: form.rol,
+        region: form.region,
+        estado: form.estado,
+        city: form.city,
+        branch: form.branch,
+        piso: form.piso,
+        ala: form.ala,
       },
       ...prev,
     ]);
@@ -161,7 +191,7 @@ export default function RegistroUsuarios() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
                       Cédula <span className="text-red-500">*</span>
@@ -187,26 +217,7 @@ export default function RegistroUsuarios() {
                     )}
                   </div>
 
-                  <div className="sm:col-span-1">
-                    <label className="block text-sm font-bold text-black mb-2">
-                      Rol <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={form.rol}
-                      onChange={(e) => setField("rol", e.target.value)}
-                      onBlur={() => markTouched("rol")}
-                      onFocus={() => setFocused("rol")}
-                      className={inputClass(getState("rol")) + " cursor-pointer"}
-                      aria-invalid={getState("rol").hasError || undefined}
-                    >
-                      <option value="">-- Selecciona --</option>
-                      <option value="Superadmin">Superadmin</option>
-                      <option value="Admin">Admin</option>
-                    </select>
-                    {getState("rol").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.rol}</p>
-                    )}
-                  </div>
+
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
@@ -250,25 +261,6 @@ export default function RegistroUsuarios() {
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
-                      Correo Electrónico <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="nombre.apellido@cantv.com"
-                      value={form.email}
-                      onChange={(e) => setField("email", e.target.value)}
-                      onBlur={() => markTouched("email")}
-                      onFocus={() => setFocused("email")}
-                      className={inputClass(getState("email"))}
-                      aria-invalid={getState("email").hasError || undefined}
-                    />
-                    {getState("email").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div className="sm:col-span-1">
-                    <label className="block text-sm font-bold text-black mb-2">
                       Teléfono <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -294,7 +286,7 @@ export default function RegistroUsuarios() {
                     </label>
                     <input
                       type="text"
-                      placeholder="usuario"
+                      placeholder="Usuario"
                       value={form.usuario}
                       onChange={(e) => setField("usuario", e.target.value)}
                       onBlur={() => markTouched("usuario")}
@@ -306,6 +298,47 @@ export default function RegistroUsuarios() {
                       <p className="text-xs text-red-600 mt-1">
                         {errors.usuario}
                       </p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Rol <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={form.rol}
+                      onChange={(e) => setField("rol", e.target.value)}
+                      onBlur={() => markTouched("rol")}
+                      onFocus={() => setFocused("rol")}
+                      className={inputClass(getState("rol")) + " cursor-pointer"}
+                      aria-invalid={getState("rol").hasError || undefined}
+                    >
+                      <option value="">-- Selecciona --</option>
+                      <option value="Superadmin">Superadmin</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Admin">Visualizador</option>
+                    </select>
+                    {getState("rol").hasError && (
+                      <p className="text-xs text-red-600 mt-1">{errors.rol}</p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Correo Electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="nombre.apellido@cantv.com"
+                      value={form.email}
+                      onChange={(e) => setField("email", e.target.value)}
+                      onBlur={() => markTouched("email")}
+                      onFocus={() => setFocused("email")}
+                      className={inputClass(getState("email"))}
+                      aria-invalid={getState("email").hasError || undefined}
+                    />
+                    {getState("email").hasError && (
+                      <p className="text-xs text-red-600 mt-1">{errors.email}</p>
                     )}
                   </div>
 
@@ -333,6 +366,147 @@ export default function RegistroUsuarios() {
                       </p>
                     )}
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Region <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.region}
+                      onChange={(e) =>
+                        setForm({ ...form, region: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Region
+                      </option>
+                      <option value="Lara">Lara</option>
+                      <option value="Yaracuy">Yaracuy</option>
+                      <option value="Portuguesa">Portuguesa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Estado <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      required
+                      placeholder="Ej: Lara"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.estado}
+                      onChange={(e) =>
+                        setForm({ ...form, estado: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Estado
+                      </option>
+                      <option value="Lara">Lara</option>
+                      <option value="Yaracuy">Yaracuy</option>
+                      <option value="Portuguesa">Portuguesa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ciudad <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.city}
+                      onChange={(e) =>
+                        setForm({ ...form, city: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Ciudad
+                      </option>
+                      <option value="Barquisimeto">Barquisimeto</option>
+                      <option value="Caracas">Caracas</option>
+                      <option value="San Felipe">San Felipe</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Sede / Torre <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      required
+                      placeholder="Ej: Torre Central"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.branch}
+                      onChange={(e) =>
+                        setForm({ ...form, branch: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Torre
+                      </option>
+                      <option value="Torre 30">Torre 30</option>
+                      <option value="Torre Este">Torre Este</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Piso <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      required
+                      placeholder="Ej: Piso 1"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.piso}
+                      onChange={(e) =>
+                        setForm({ ...form, piso: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Piso
+                      </option>
+                      <option value="Santa Rosa">Santa Rosa</option>
+                      <option value="Planta Baja">Planta Baja</option>
+                      <option value="MEZZ">MEZZ</option>
+                      <option value="Piso 1">Piso 1</option>
+                      <option value="Piso 2">Piso 2</option>
+                      <option value="Piso 3">Piso 3</option>
+                      <option value="Piso 4">Piso 4</option>
+                      <option value="Piso 5">Piso 5</option>
+                      <option value="Piso 3">Piso 6</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ala <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      required
+                      placeholder="Ej: Seleccione Ala Norte"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.ala}
+                      onChange={(e) =>
+                        setForm({ ...form, ala: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Ala
+                      </option>
+                      <option value="Ala Norte">Ala Norte</option>
+                      <option value="Ala Este">Ala Este</option>
+                      <option value="Ala Sur">Ala Sur</option>
+                      <option value="Ala Oeste">Ala Oeste</option>
+                    </select>
+                  </div>
+
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
@@ -373,10 +547,16 @@ export default function RegistroUsuarios() {
                         "Cédula",
                         "Nombre",
                         "Apellido",
-                        "Correo",
                         "Teléfono",
                         "Usuario",
                         "Rol",
+                        "Correo",
+                        "Region",
+                        "Estado",
+                        "Ciudad",
+                        "Sede",
+                        "Piso",
+                        "Ala"
                       ].map((h) => (
                         <th
                           key={h}
@@ -405,9 +585,6 @@ export default function RegistroUsuarios() {
                           {u.apellido}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {u.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.telefono}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -424,6 +601,27 @@ export default function RegistroUsuarios() {
                           >
                             {u.rol}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.region}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.estado}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.city}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.branch}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.piso}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {u.ala}
                         </td>
                       </tr>
                     ))}

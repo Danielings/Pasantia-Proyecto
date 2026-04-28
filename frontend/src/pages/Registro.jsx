@@ -44,7 +44,15 @@ export default function Registro() {
     speakersSerial: "",
     speakersStatus: "Bueno",
 
-    // Ubicación
+ // Procedencia 
+    regionP: "",
+    estadoP: "",
+    cityP: "",
+    branchP: "",
+    pisoP: "",
+    alaP: "",
+
+    // Ubicación 
     region: "",
     estado: "",
     city: "",
@@ -117,6 +125,7 @@ export default function Registro() {
                 <option value="Teclado">Teclado</option>
                 <option value="Mouse">Mouse</option>
                 <option value="Switch">Switch</option>
+                <option value="Impresora">Impresora</option>
               </select>
             </div>
 
@@ -147,7 +156,7 @@ export default function Registro() {
                       <option value="" disabled>
                         -- Selecciona la marca --
                       </option>
-                      {formData.type !== "Switch" && (
+                      {formData.type !== "Switch" && formData.type !== "Impresora" && (
                         <>
                           <option value="Vit">Vit</option>
                           <option value="Lenovo">Lenovo</option>
@@ -159,6 +168,22 @@ export default function Registro() {
                           <option value="Cisco">Cisco</option>
                         </>
                       )}
+
+                      {formData.type !== "Impresora" && (
+                        <>
+                          <option value="HP">HP</option>
+                          <option value="Lexmark">Lexmark</option>
+                          <option value="Dellcop">Dellcop</option>
+                        </>
+                      )}
+                      {formData.type === "Impresora" && (
+                        <>
+                          <option value="HP">HP</option>
+                          <option value="Lexmark">Lexmark</option>
+                          <option value="Dellcop">Dellcop</option>
+                        </>
+                      )}
+
                     </select>
                   </div>
 
@@ -910,12 +935,188 @@ export default function Registro() {
                     </div>
                   </div>
                 )}
-                {/* UBICACIÓN Y OBSERVACIONES */}
+
+
+
+                {/* UBICACION Y OBSERVACIONES DE ORIGEN*/}
                 <div className="pt-6 border-t border-gray-200 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50/40 p-4 rounded-xl border border-blue-100">
                     <div className="col-span-full">
                       <h3 className="text-sm font-bold text-blue-800 uppercase">
-                        Ubicación de Asignación
+                        Procedencia del Equipo
+                      </h3>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Region <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                        value={formData.regionP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, regionP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Region
+                        </option>
+                        <option value="Lara">Lara</option>
+                        <option value="Yaracuy">Yaracuy</option>
+                        <option value="Portuguesa">Portuguesa</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Estado <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        type="text"
+                        required
+                        placeholder="Ej: Lara"
+                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                        value={formData.estadoP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, estadoP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Estado
+                        </option>
+                        <option value="Lara">Lara</option>
+                        <option value="Yaracuy">Yaracuy</option>
+                        <option value="Portuguesa">Portuguesa</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Ciudad <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                        value={formData.cityP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cityP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Ciudad
+                        </option>
+                        <option value="Barquisimeto">Barquisimeto</option>
+                        <option value="Caracas">Caracas</option>
+                        <option value="San Felipe">San Felipe</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Sede / Torre <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        type="text"
+                        required
+                        placeholder="Ej: Torre Central"
+                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                        value={formData.branchP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, branchP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Torre
+                        </option>
+                        <option value="Barquisimeto">Torre 30</option>
+                        <option value="Caracas">Torre Este</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Piso <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        type="text"
+                        required
+                        placeholder="Ej: Piso 1"
+                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                        value={formData.pisoP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, pisoP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Piso
+                        </option>
+                          <option value="Santa Rosa">Santa Rosa</option>
+                          <option value="Planta Baja">Planta Baja</option>
+                          <option value="MEZZ">MEZZ</option>
+                          <option value="Piso 1">Piso 1</option>
+                          <option value="Piso 2">Piso 2</option>
+                          <option value="Piso 3">Piso 3</option>
+                          <option value="Piso 4">Piso 4</option>
+                          <option value="Piso 5">Piso 5</option>
+                          <option value="Piso 6">Piso 6</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Ala <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        type="text"
+                        required
+                        placeholder="Ej: Seleccione Ala 1"
+                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                        value={formData.alaP}
+                        onChange={(e) =>
+                          setFormData({ ...formData, alaP: e.target.value })
+                        }
+                      >
+                        <option value="" disabled>
+                          Seleccione Ala
+                        </option>
+                          <option value="Ala Norte">Ala Norte</option>
+                          <option value="Ala Este">Ala Este</option>
+                          <option value="Ala Sur">Ala Sur</option>
+                          <option value="Ala Oeste">Ala Oeste</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-bold text-black mb-2"
+                    >
+                      Notas / Observaciones
+                    </label>
+                    <textarea
+                      id="description"
+                      rows="3"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm border outline-none focus:ring-primary-500"
+                      placeholder="Detalles sobre desgaste físico, faltantes o fallas detectadas en general..."
+                    ></textarea>
+                  </div>
+                </div>
+
+
+                {/* UBICACIÓN Y OBSERVACIONES DE LLEGADA */}
+                <div className="pt-6 border-t border-gray-200 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50/40 p-4 rounded-xl border border-blue-100">
+                    <div className="col-span-full">
+                      <h3 className="text-sm font-bold text-blue-800 uppercase">
+                        Ubicación de del Equipo
                       </h3>
                     </div>
                     <div>
@@ -1021,9 +1222,15 @@ export default function Registro() {
                         <option value="" disabled>
                           Seleccione Piso
                         </option>
-                        <option value="Piso 1">Piso 1</option>
-                        <option value="Piso 2">Piso 2</option>
-                        <option value="Piso 3">Piso 3</option>
+                          <option value="Santa Rosa">Santa Rosa</option>
+                          <option value="Planta Baja">Planta Baja</option>
+                          <option value="MEZZ">MEZZ</option>
+                          <option value="Piso 1">Piso 1</option>
+                          <option value="Piso 2">Piso 2</option>
+                          <option value="Piso 3">Piso 3</option>
+                          <option value="Piso 4">Piso 4</option>
+                          <option value="Piso 5">Piso 5</option>
+                          <option value="Piso 3">Piso 6</option>
                       </select>
                     </div>
 
@@ -1044,9 +1251,10 @@ export default function Registro() {
                         <option value="" disabled>
                           Seleccione Ala
                         </option>
-                        <option value="Ala 1">Ala 1</option>
-                        <option value="Ala 2">Ala 2</option>
-                        <option value="Ala 3">Ala 3</option>
+                          <option value="Ala Norte">Ala Norte</option>
+                          <option value="Ala Este">Ala Este</option>
+                          <option value="Ala Sur">Ala Sur</option>
+                          <option value="Ala Oeste">Ala Oeste</option>
                       </select>
                     </div>
 
