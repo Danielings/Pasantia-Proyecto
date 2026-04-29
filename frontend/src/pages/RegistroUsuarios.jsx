@@ -11,12 +11,15 @@ const initialForm = {
   usuario: "",
   password: "",
   rol: "",
+<<<<<<< HEAD
   region: "",
   estado: "",
   city: "",
   branch: "",
   piso: "",
   ala: "",
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
 };
 
 const seedUsers = [
@@ -29,12 +32,15 @@ const seedUsers = [
     telefono: "0414-1234567",
     usuario: "jperez",
     rol: "Admin",
+<<<<<<< HEAD
     region: "Lara",
     estado: "Lara",
     city: "Barquisimeto",
     branch: "Torre 30",
     piso: "Piso 1",
     ala: "Ala 1",
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
   },
   {
     id: 2,
@@ -45,12 +51,15 @@ const seedUsers = [
     telefono: "0424-7654321",
     usuario: "mgomez",
     rol: "Superadmin",
+<<<<<<< HEAD
     region: "Lara",
     estado: "Lara",
     city: "Barquisimeto",
     branch: "Torre 30",
     piso: "Piso 1",
     ala: "Ala 1",
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
   },
 ];
 
@@ -66,12 +75,15 @@ function validate(values) {
     "usuario",
     "password",
     "rol",
+<<<<<<< HEAD
     "region",
     "estado",
     "city",
     "branch",
     "piso",
     "ala",
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
   ];
 
   for (const key of required) {
@@ -91,7 +103,11 @@ function validate(values) {
 
 function inputClass({ hasError, isSuccess }) {
   const base =
+<<<<<<< HEAD
     "block w-60 rounded-lg shadow-sm py-2 px-3 text-sm border transition-all outline-none bg-white";
+=======
+    "block w-full rounded-lg shadow-sm py-2 px-3 text-sm border transition-all outline-none bg-white";
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
   const focus = "focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
   const error = "border-red-300 focus:ring-red-500 focus:border-red-500";
   const success = "border-green-300 focus:ring-green-500 focus:border-green-500";
@@ -142,12 +158,15 @@ export default function RegistroUsuarios() {
         telefono: form.telefono.trim(),
         usuario: form.usuario.trim(),
         rol: form.rol,
+<<<<<<< HEAD
         region: form.region,
         estado: form.estado,
         city: form.city,
         branch: form.branch,
         piso: form.piso,
         ala: form.ala,
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
       },
       ...prev,
     ]);
@@ -191,7 +210,11 @@ export default function RegistroUsuarios() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+<<<<<<< HEAD
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+=======
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
                       Cédula <span className="text-red-500">*</span>
@@ -217,7 +240,30 @@ export default function RegistroUsuarios() {
                     )}
                   </div>
 
+<<<<<<< HEAD
 
+=======
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Rol <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={form.rol}
+                      onChange={(e) => setField("rol", e.target.value)}
+                      onBlur={() => markTouched("rol")}
+                      onFocus={() => setFocused("rol")}
+                      className={inputClass(getState("rol")) + " cursor-pointer"}
+                      aria-invalid={getState("rol").hasError || undefined}
+                    >
+                      <option value="">-- Selecciona --</option>
+                      <option value="Superadmin">Superadmin</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                    {getState("rol").hasError && (
+                      <p className="text-xs text-red-600 mt-1">{errors.rol}</p>
+                    )}
+                  </div>
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
@@ -261,6 +307,28 @@ export default function RegistroUsuarios() {
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
+<<<<<<< HEAD
+=======
+                      Correo Electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="nombre.apellido@cantv.com"
+                      value={form.email}
+                      onChange={(e) => setField("email", e.target.value)}
+                      onBlur={() => markTouched("email")}
+                      onFocus={() => setFocused("email")}
+                      className={inputClass(getState("email"))}
+                      aria-invalid={getState("email").hasError || undefined}
+                    />
+                    {getState("email").hasError && (
+                      <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                       Teléfono <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -286,7 +354,11 @@ export default function RegistroUsuarios() {
                     </label>
                     <input
                       type="text"
+<<<<<<< HEAD
                       placeholder="Usuario"
+=======
+                      placeholder="usuario"
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                       value={form.usuario}
                       onChange={(e) => setField("usuario", e.target.value)}
                       onBlur={() => markTouched("usuario")}
@@ -303,6 +375,7 @@ export default function RegistroUsuarios() {
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
+<<<<<<< HEAD
                       Rol <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -344,6 +417,8 @@ export default function RegistroUsuarios() {
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                       Contraseña <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -366,6 +441,7 @@ export default function RegistroUsuarios() {
                       </p>
                     )}
                   </div>
+<<<<<<< HEAD
 
                   <div>
                     <label className="block text-sm font-bold text-black mb-2">
@@ -507,6 +583,8 @@ export default function RegistroUsuarios() {
                     </select>
                   </div>
 
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
@@ -547,6 +625,7 @@ export default function RegistroUsuarios() {
                         "Cédula",
                         "Nombre",
                         "Apellido",
+<<<<<<< HEAD
                         "Teléfono",
                         "Usuario",
                         "Rol",
@@ -557,6 +636,12 @@ export default function RegistroUsuarios() {
                         "Sede",
                         "Piso",
                         "Ala"
+=======
+                        "Correo",
+                        "Teléfono",
+                        "Usuario",
+                        "Rol",
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                       ].map((h) => (
                         <th
                           key={h}
@@ -585,6 +670,12 @@ export default function RegistroUsuarios() {
                           {u.apellido}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+<<<<<<< HEAD
+=======
+                          {u.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                           {u.telefono}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -602,6 +693,7 @@ export default function RegistroUsuarios() {
                             {u.rol}
                           </span>
                         </td>
+<<<<<<< HEAD
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.email}
                         </td>
@@ -623,6 +715,8 @@ export default function RegistroUsuarios() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.ala}
                         </td>
+=======
+>>>>>>> 3622d8ea7818f279c12e50359b56fb4b8dad52be
                       </tr>
                     ))}
 
