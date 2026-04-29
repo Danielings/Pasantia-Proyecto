@@ -3,16 +3,22 @@ import Header from "../components/layout/Header";
 import { FiSave, FiX } from "react-icons/fi";
 import { CiSearch } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { es } from "date-fns/locale";
+
 
 export default function Registro() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // Datos Generales
     name: "",
+    model: "",
     serial: "",
     type: "",
     status: "Bueno",
     description: "",
+    acquisitionDate: new Date(),
 
     // Componentes Internos
     ram: "",
@@ -133,17 +139,17 @@ export default function Registro() {
             {formData.type && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-8">
                 {/* DATOS DEL EQUIPO PRINCIPAL */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
                   <div className="col-span-full mb-2 border-b border-gray-200 pb-2">
                     <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest">
                       Datos del Equipo Principal ({formData.type})
                     </h3>
                   </div>
 
-                  {/* Modelo / Marca */}
+                  {/*MARCA*/}
                   <div className="col-span-full md:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
-                      Modelo / Marca <span className="text-red-500">*</span>
+                      Marca <span className="text-red-500">*</span>
                     </label>
                     <select
                       required
@@ -151,10 +157,10 @@ export default function Registro() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-primary-500 text-base border outline-none bg-white cursor-pointer"
+                      className="block w-1/2 border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-primary-500 text-base border outline-none bg-white cursor-pointer"
                     >
                       <option value="" disabled>
-                        -- Selecciona la marca --
+                        -- Selecciona la Marca --
                       </option>
                       {formData.type !== "Switch" && formData.type !== "Impresora" && (
                         <>
@@ -187,6 +193,28 @@ export default function Registro() {
                     </select>
                   </div>
 
+                {/* MODELO*/}
+                  <div className="col-span-full md:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+                     Modelo{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex flex-1">
+                        <input
+                          type="text"
+                          required
+                          className="block w-auto border-gray-300 bg-white rounded-lg shadow-sm py-2 px-3 border outline-none font-mono focus:ring-primary-500 text-sm"
+                          placeholder="Thinkpad X1 Carbon Gen 9..."
+                          value={formData.model}
+                          onChange={(e) =>
+                            setFormData({ ...formData, model: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Serial General */}
                   <div className="col-span-full md:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
@@ -198,7 +226,7 @@ export default function Registro() {
                         <input
                           type="text"
                           required
-                          className="block w-full border-gray-300 rounded-l-lg shadow-sm py-2 px-3 border outline-none font-mono focus:ring-primary-500 text-sm"
+                          className="block w-1/2 bg-white border-gray-300 rounded-l-lg shadow-sm py-2 px-3 border outline-none font-mono focus:ring-primary-500 text-sm"
                           placeholder="SN-XXXXX-XXXX"
                           value={formData.serial}
                           onChange={(e) =>
@@ -215,6 +243,14 @@ export default function Registro() {
                       </div>
 
                       {/* Estado General B/M */}
+                      
+                    <div className="col-span-full md:col-span-1">
+                    <label className="block text-sm font-bold text-black mb-2">
+                     Estado{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    </div>
+
                       <div className="flex justify-around items-center bg-white border border-gray-300 shadow-sm rounded-lg py-1 px-3 w-[100px]">
                         <label className="flex items-center space-x-1 cursor-pointer group">
                           <input
@@ -938,7 +974,7 @@ export default function Registro() {
 
 
 
-                {/* UBICACION Y OBSERVACIONES DE ORIGEN*/}
+                {/* UBICACION DE LLEGADA DE PROCEDENCIA*/}
                 <div className="pt-6 border-t border-gray-200 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50/40 p-4 rounded-xl border border-blue-100">
                     <div className="col-span-full">
@@ -959,11 +995,16 @@ export default function Registro() {
                         }
                       >
                         <option value="" disabled>
-                          Seleccione Region
+                          Seleccione Región
                         </option>
-                        <option value="Lara">Lara</option>
-                        <option value="Yaracuy">Yaracuy</option>
-                        <option value="Portuguesa">Portuguesa</option>
+                        <option value="Central">Central</option>
+                        <option value="Centro Llano">Centro Llano</option>
+                        <option value="CNT">CNT</option>
+                        <option value="CORTIJOS">CORTIJOS</option>
+                        <option value="ORIENTE">ORIENTE</option>
+                        <option value="RCO">RCO</option>
+                        <option value="RLA">RLA</option>
+                        <option value="RNO">RNO</option>
                       </select>
                     </div>
 
@@ -1087,41 +1128,20 @@ export default function Registro() {
 
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-bold text-black mb-2"
-                    >
-                      Notas / Observaciones
-                    </label>
-                    <textarea
-                      id="description"
-                      rows="3"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                      className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm border outline-none focus:ring-primary-500"
-                      placeholder="Detalles sobre desgaste físico, faltantes o fallas detectadas en general..."
-                    ></textarea>
-                  </div>
                 </div>
 
 
-                {/* UBICACIÓN Y OBSERVACIONES DE LLEGADA */}
+                {/* ASIGNACION DE ALMACÉN */}
                 <div className="pt-6 border-t border-gray-200 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50/40 p-4 rounded-xl border border-blue-100">
                     <div className="col-span-full">
                       <h3 className="text-sm font-bold text-blue-800 uppercase">
-                        Ubicación de del Equipo
+                        Asignación de Almacén
                       </h3>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-black mb-2">
-                        Region <span className="text-red-500">*</span>
+                        Región <span className="text-red-500">*</span>
                       </label>
                       <select
                         required
@@ -1260,6 +1280,28 @@ export default function Registro() {
 
                   </div>
 
+
+                {/* FECHA DE INCORPORACIÓN */}
+                <div className="pt-6 border-t border-gray-200 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50/40 p-4 rounded-xl border border-blue-100">
+                    <div className="col-span-full">
+                      <h3 className="text-sm font-bold text-blue-800 uppercase">
+                        Fecha de Incorporación
+                      </h3>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-2">
+                        Fecha <span className="text-red-500">*</span>
+                      </label>
+                      <DatePicker
+                        selected={formData.acquisitionDate}
+                        onChange={(date) => setFormData({ ...formData, acquisitionDate: date })}
+                        dateFormat="dd/MM/yyyy"
+                        locale={es}
+                        className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-primary-500 text-base border outline-none bg-white"
+                      />
+                    </div>
+                  
                   <div>
                     <label
                       htmlFor="description"
@@ -1301,6 +1343,8 @@ export default function Registro() {
                     Guardar Registro
                   </button>
                 </div>
+              </div>
+              </div>
               </div>
             )}
           </form>
