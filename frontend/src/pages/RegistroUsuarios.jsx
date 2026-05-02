@@ -107,55 +107,6 @@ export default function RegistroUsuarios() {
   const [piso, setPiso] = useState([]);
   const [ala, setAla  ] = useState([]);
 
-<<<<<<< HEAD
-  const manejarCambioRegion = (e) => {
-    const regionNombre = e.target.value;
-    setForm(prev => ({ ...prev, region: regionNombre, estado: '', city: '', branch: '' }));
-    markTouched("region");
-    if (regionNombre === 'Occidente') {
-      setEstados([{ id: 1, nombre: 'Lara' }]);
-    } else if (regionNombre === 'Centro') {
-      setEstados([{ id: 2, nombre: 'Yaracuy' }]);
-    } else if (regionNombre === 'Llanos') {
-      setEstados([{ id: 3, nombre: 'Portuguesa' }]);
-    } else {
-      setEstados([]);
-    }
-  };
-
-  const manejarCambioEstado = (e) => {
-    const estadoNombre = e.target.value;
-    setForm(prev => ({ ...prev, estado: estadoNombre, city: '' }));
-    markTouched("estado");
-    if (estadoNombre === 'Lara') {
-      setCiudades([{ id: 1, nombre: 'Barquisimeto' }]);
-    } else if (estadoNombre === 'Yaracuy') {
-      setCiudades([{ id: 2, nombre: 'San Felipe' }]);
-    } else if (estadoNombre === 'Portuguesa') {
-      setCiudades([{ id: 3, nombre: 'Acarigua' }]);
-    } else {
-      setCiudades([]);
-    }
-  };
-
-  const manejarCambioCiudad = (e) => {
-    const ciudadNombre = e.target.value;
-    setForm(prev => ({ ...prev, city: ciudadNombre, branch: '' }));
-    markTouched("city");
-    if (ciudadNombre === 'Barquisimeto') {
-      setTorres([
-        { id: 1, nombre: 'Barquisimeto Centro' },
-        { id: 2, nombre: 'Torre Lara' }
-      ]);
-    } else if (ciudadNombre === 'San Felipe') {
-      setTorres([{ id: 3, nombre: 'SF' }]);
-    } else {
-      setTorres([]);
-    }
-  };
-=======
->>>>>>> c12c0146a7e1dbd42d1d577130038db43f0423df
-
     const manejarCambioTorre = (e) => {
     const torreNombre = e.target.value;
     setForm(prev => ({ ...prev, branch: torreNombre }));
