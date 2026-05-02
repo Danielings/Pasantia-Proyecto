@@ -49,6 +49,12 @@ const seedUsers = [
   },
 ];
 
+const torresData = [
+  { id: 1, nombre: 'Barquisimeto Centro' },
+  { id: 2, nombre: 'Torre Lara' },
+  { id: 3, nombre: 'Torre 30' },
+];
+
 function validate(values) {
   const errors = {};
 
@@ -97,13 +103,8 @@ export default function RegistroUsuarios() {
   const [focused, setFocused] = useState(null);
   const [users, setUsers] = useState(seedUsers);
 
-  const [region] = useState([
-    { id: 1, nombre: 'Occidente' },
-    { id: 2, nombre: 'Centro'},
-    { id: 3, nombre: 'Llanos'},
-  ]);
 
-  const [torres, setTorres] = useState([]);
+  const [torres, setTorres] = useState(torresData);
   const [piso, setPiso] = useState([]);
   const [ala, setAla  ] = useState([]);
 
@@ -171,9 +172,6 @@ export default function RegistroUsuarios() {
         telefono: form.telefono.trim(),
         usuario: form.usuario.trim(),
         rol: form.rol,
-        region: form.region,
-        estado: form.estado,
-        city: form.city,
         branch: form.branch,
         piso: form.piso,
         ala: form.ala,
@@ -190,7 +188,7 @@ export default function RegistroUsuarios() {
     setForm(initialForm);
     setTouched({});
     setFocused(null);
-    setTorres([]);
+    setTorres(torresData);
     setPiso([]);
     setAla([]);
   };
@@ -456,7 +454,7 @@ export default function RegistroUsuarios() {
                         markTouched("ala");
                       }}
                     >
-                      <option value="" disabled>
+                      <option value="">
                         Seleccione Ala
                       </option>
                       {ala.map(ala => (

@@ -1123,14 +1123,14 @@ export default function Registro() {
                         Procedencia del Equipo
                       </h3>
                     </div>
-                    
+                  <div>
                        <label className="block text-sm font-bold text-black mb-2">
                       Region <span className="text-red-500">*</span>
                     </label>
                     <select
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.regionP}
+                      value={formData.regionP}
                       onChange={manejarCambioRegionP}
                     >
                       <option value="">
@@ -1150,14 +1150,14 @@ export default function Registro() {
                       disabled={estadosP.length === 0}
                       required
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.estadoP}
+                      value={formData.estadoP}
                       onChange={manejarCambioEstadoP}
                     >
                       <option value="">
                         Seleccione Estado
                       </option>
                       {estadosP.map(estP => (
-                        <option key={estPid} value={estP.nombre}>{estP.nombre}</option>
+                        <option key={estP.id} value={estP.nombre}>{estP.nombre}</option>
                       ))}
                     </select>
                   </div>
@@ -1170,7 +1170,7 @@ export default function Registro() {
                       disabled={ciudadesP.length === 0}
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.cityP}
+                      value={formData.cityP}
                       onChange={manejarCambioCiudadP}
                     >
                       <option value="">
@@ -1190,7 +1190,7 @@ export default function Registro() {
                       disabled={torresP.length === 0}
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.branchP}
+                      value={formData.branchP}
                       onChange={manejarCambioTorre}
                     >
                       <option value="">
@@ -1212,7 +1212,7 @@ export default function Registro() {
                       required
                       placeholder="Ej: Piso 1"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.pisoP}
+                      value={formData.pisoP}
                       onChange={manejarCambioPisoP}
                     >
                         <option value="">
@@ -1234,7 +1234,7 @@ export default function Registro() {
                       required
                       placeholder="Ej: Seleccione Ala Norte"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.alaP}
+                      value={formData.alaP}
                       onChange={(e) =>
                         setFormData({ ...formData, alaP: e.target.value })
                       }
@@ -1250,6 +1250,7 @@ export default function Registro() {
 
                 </div>
 
+            </div>
 
                 {/* ASIGNACION DE ALMACÉN */}
                 <div className="pt-6 border-t border-gray-200 space-y-6">
@@ -1266,7 +1267,7 @@ export default function Registro() {
                     <select
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.region}
+                      value={formData.region}
                       onChange={manejarCambioRegion}
                     >
                       <option value="">
@@ -1286,7 +1287,7 @@ export default function Registro() {
                       disabled={estados.length === 0}
                       required
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.estado}
+                      value={formData.estado}
                       onChange={manejarCambioEstado}
                     >
                       <option value="">
@@ -1306,7 +1307,7 @@ export default function Registro() {
                       disabled={ciudades.length === 0}
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.city}
+                      value={formData.city}
                       onChange={manejarCambioCiudad}
                     >
                       <option value="">
@@ -1326,7 +1327,7 @@ export default function Registro() {
                       disabled={torres.length === 0}
                       required
                       className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.branch}
+                      value={formData.branch}
                       onChange={manejarCambioTorre}
                     >
                       <option value="">
@@ -1348,7 +1349,7 @@ export default function Registro() {
                       required
                       placeholder="Ej: Piso 1"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.piso}
+                      value={formData.piso}
                       onChange={manejarCambioPiso}
                     >
                         <option value="">
@@ -1370,7 +1371,7 @@ export default function Registro() {
                       required
                       placeholder="Ej: Seleccione Ala Norte"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.ala}
+                      value={formData.ala}
                       onChange={(e) =>
                         setFormData({ ...formData, ala: e.target.value })
                       }
@@ -1406,27 +1407,28 @@ export default function Registro() {
                         className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-primary-500 text-base border outline-none bg-white"
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-bold text-black mb-2"
-                    >
-                      Notas / Observaciones
-                    </label>
-                    <textarea
-                      id="description"
-                      rows="3"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                      className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm border outline-none focus:ring-primary-500"
-                      placeholder="Detalles sobre desgaste físico, faltantes o fallas detectadas en general..."
-                    ></textarea>
+
+                    <div>
+                      <label
+                        htmlFor="description"
+                        className="block text-sm font-bold text-black mb-2"
+                      >
+                        Notas / Observaciones
+                      </label>
+                      <textarea
+                        id="description"
+                        rows="3"
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 text-sm border outline-none focus:ring-primary-500"
+                        placeholder="Detalles sobre desgaste físico, faltantes o fallas detectadas en general..."
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
 
