@@ -67,6 +67,169 @@ export default function Registro() {
     ala: "",
   });
 
+
+
+    const [regionP] = useState([
+      { id: 1, nombre: 'Occidente' },
+      { id: 2, nombre: 'Centro'},
+      { id: 3, nombre: 'Llanos'},
+    ]);
+  
+    const [estadosP, setEstadosP] = useState([]);
+    const [ciudadesP, setCiudadesP] = useState([]);
+    const [torresP, setTorresP] = useState([]);
+    const [pisoP, setPisoP] = useState([]);
+    const [alaP, setAlaP] = useState([]);
+
+
+    const manejarCambioRegionP = (e) => {
+      const regionPNombre = e.target.value;
+      setFormData(prev => ({ ...prev, regionP: regionPNombre, estadoP: '', cityP: '', branchP: '' }));
+      if (regionPNombre === 'Occidente') {
+        setEstadosP([{ id: 1, nombre: 'Lara' }]);
+      } else if (regionPNombre === 'Centro') {
+        setEstadosP([{ id: 2, nombre: 'Yaracuy' }]);
+      } else if (regionPNombre === 'Llanos') {
+        setEstadosP([{ id: 3, nombre: 'Portuguesa' }]);
+      } else {
+        setEstadosP([]);
+      }
+    };
+
+    const manejarCambioEstadoP = (e) => {
+      const estadoPNombre = e.target.value;
+      setFormData(prev => ({ ...prev, estadoP: estadoPNombre, cityP: '' }));
+      if (estadoPNombre === 'Lara') {
+        setCiudadesP([{ id: 1, nombre: 'Barquisimeto' }]);
+      } else if (estadoPNombre === 'Yaracuy') {
+        setCiudadesP([{ id: 2, nombre: 'San Felipe' }]);
+      } else if (estadoPNombre === 'Portuguesa') {
+        setCiudadesP([{ id: 3, nombre: 'Acarigua' }]);
+      } else {
+        setCiudadesP([]);
+      }
+    };
+
+    const manejarCambioCiudadP = (e) => {
+      const ciudadPNombre = e.target.value;
+      setFormData(prev => ({ ...prev, cityP: ciudadPNombre, branchP: '' }));
+      if (ciudadPNombre === 'Barquisimeto') {
+        setTorresP([
+          { id: 1, nombre: 'Barquisimeto Centro' },
+          { id: 2, nombre: 'Torre Lara' }
+        ]);
+      } else if (ciudadPNombre === 'San Felipe') {
+        setTorresP([{ id: 3, nombre: 'SF' }]);
+      } else {
+        setTorresP([]);
+      }
+    };
+
+      const manejarCambioTorreP = (e) => {
+      const torrePNombre = e.target.value;
+      setFormData(prev => ({ ...prev, branchP: torrePNombre }));
+      if (torrePNombre === 'Barquisimeto Centro') {
+        setPisoP([
+          { id: 1, nombre: 'Piso 1' }
+        ]);
+      } else if (torrePNombre === 'Torre Lara') {
+        setPisoP([{ id: 2, nombre: 'Piso 1' }, { id: 3, nombre: 'Piso 6' }]);
+      } else {
+        setPisoP([]);
+      }
+    };
+
+      const manejarCambioPisoP = (e) => {
+      const pisoPNombre = e.target.value;
+      setFormData(prev => ({ ...prev, pisoP: pisoPNombre }));
+      if (pisoPNombre === 'Piso 1') {
+        setAlaP([{ id: 1, nombre: 'Ala Norte', }, { id: 2, nombre: 'Ala Sur' }]);
+      } else {
+        setAlaP([]);
+      }
+    };
+
+      const [region] = useState([
+        { id: 4, nombre: 'Occidente' },
+        { id: 5, nombre: 'Centro'},
+        { id: 6, nombre: 'Llanos'},
+      ]);
+    
+      const [estados, setEstados] = useState([]);
+      const [ciudades, setCiudades] = useState([]);
+      const [torres, setTorres] = useState([]);
+      const [piso, setPiso] = useState([]);
+      const [ala, setAla  ] = useState([]);
+
+        const manejarCambioRegion = (e) => {
+          const regionNombre = e.target.value;
+          setFormData(prev => ({ ...prev, region: regionNombre, estado: '', city: '', branch: '' }));
+          if (regionNombre === 'Occidente') {
+            setEstados([{ id: 4, nombre: 'Lara' }]);
+          } else if (regionNombre === 'Centro') {
+            setEstados([{ id: 5, nombre: 'Yaracuy' }]);
+          } else if (regionNombre === 'Llanos') {
+            setEstados([{ id: 6, nombre: 'Portuguesa' }]);
+          } else {
+            setEstados([]);
+          }
+        };
+
+         const manejarCambioEstado = (e) => {
+          const estadoNombre = e.target.value;
+          setFormData(prev => ({ ...prev, estado: estadoNombre, city: '' }));
+          if (estadoNombre === 'Lara') {
+            setCiudades([{ id: 1, nombre: 'Barquisimeto' }]);
+          } else if (estadoNombre === 'Yaracuy') {
+            setCiudades([{ id: 2, nombre: 'San Felipe' }]);
+          } else if (estadoNombre === 'Portuguesa') {
+            setCiudades([{ id: 3, nombre: 'Acarigua' }]);
+          } else {
+            setCiudades([]);
+          }
+        };
+
+        const manejarCambioCiudad = (e) => {
+          const ciudadNombre = e.target.value;
+          setFormData(prev => ({ ...prev, city: ciudadNombre, branch: '' }));
+          if (ciudadNombre === 'Barquisimeto') {
+            setTorres([
+              { id: 1, nombre: 'Barquisimeto Centro' },
+              { id: 2, nombre: 'Torre Lara' }
+            ]);
+          } else if (ciudadNombre === 'San Felipe') {
+            setTorres([{ id: 3, nombre: 'SF' }]);
+          } else {
+            setTorres([]);
+          }
+        };
+
+          const manejarCambioTorre = (e) => {
+          const torreNombre = e.target.value;
+          setFormData(prev => ({ ...prev, branch: torreNombre }));
+          if (torreNombre === 'Barquisimeto Centro') {
+            setPiso([
+              { id: 1, nombre: 'Piso 1' }
+            ]);
+          } else if (torreNombre === 'Torre Lara') {
+            setPiso([{ id: 2, nombre: 'Piso 1' }, { id: 3, nombre: 'Piso 6' }]);
+          } else {
+            setPiso([]);
+          }
+        };
+
+          const manejarCambioPiso = (e) => {
+          const pisoNombre = e.target.value;
+          setFormData(prev => ({ ...prev, piso: pisoNombre }));
+          if (pisoNombre === 'Piso 1') {
+            setAla([{ id: 1, nombre: 'Ala Norte', }, { id: 2, nombre: 'Ala Sur' }]);
+          } else {
+            setAla([]);
+          }
+        };
+
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // Lógica de guardado a la API iría aquí
@@ -174,11 +337,9 @@ export default function Registro() {
                           <option value="Cisco">Cisco</option>
                         </>
                       )}
-                      <>
                         <option value="HP">HP</option>
                         <option value="Lexmark">Lexmark</option>
                         <option value="Dellcop">Dellcop</option>
-                      </>
                     </select>
                   </div>
 
@@ -962,150 +1123,129 @@ export default function Registro() {
                         Procedencia del Equipo
                       </h3>
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Region <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                        value={formData.regionP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, regionP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Región
-                        </option>
-                        <option value="Central">Central</option>
-                        <option value="Centro Llano">Centro Llano</option>
-                        <option value="CNT">CNT</option>
-                        <option value="CORTIJOS">CORTIJOS</option>
-                        <option value="ORIENTE">ORIENTE</option>
-                        <option value="RCO">RCO</option>
-                        <option value="RLA">RLA</option>
-                        <option value="RNO">RNO</option>
-                      </select>
-                    </div>
+                    
+                       <label className="block text-sm font-bold text-black mb-2">
+                      Region <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.regionP}
+                      onChange={manejarCambioRegionP}
+                    >
+                      <option value="">
+                        Seleccione Region
+                      </option>
+                      {regionP.map(regP => (
+                        <option key={regP.id} value={regP.nombre}>{regP.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Estado <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Lara"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.estadoP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, estadoP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Estado
-                        </option>
-                        <option value="Lara">Lara</option>
-                        <option value="Yaracuy">Yaracuy</option>
-                        <option value="Portuguesa">Portuguesa</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Estado <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={estadosP.length === 0}
+                      required
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.estadoP}
+                      onChange={manejarCambioEstadoP}
+                    >
+                      <option value="">
+                        Seleccione Estado
+                      </option>
+                      {estadosP.map(estP => (
+                        <option key={estPid} value={estP.nombre}>{estP.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Ciudad <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                        value={formData.cityP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cityP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Ciudad
-                        </option>
-                        <option value="Barquisimeto">Barquisimeto</option>
-                        <option value="Caracas">Caracas</option>
-                        <option value="San Felipe">San Felipe</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Sede / Torre <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Torre Central"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.branchP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, branchP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Torre
-                        </option>
-                        <option value="Barquisimeto">Torre 30</option>
-                        <option value="Caracas">Torre Este</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ciudad <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={ciudadesP.length === 0}
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.cityP}
+                      onChange={manejarCambioCiudadP}
+                    >
+                      <option value="">
+                        Seleccione Ciudad
+                      </option>
+                      {ciudadesP.map(ciuP => (
+                        <option key={ciuP.id} value={ciuP.nombre}>{ciuP.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Piso <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Piso 1"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.pisoP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, pisoP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Piso
-                        </option>
-                          <option value="Santa Rosa">Santa Rosa</option>
-                          <option value="Planta Baja">Planta Baja</option>
-                          <option value="MEZZ">MEZZ</option>
-                          <option value="Piso 1">Piso 1</option>
-                          <option value="Piso 2">Piso 2</option>
-                          <option value="Piso 3">Piso 3</option>
-                          <option value="Piso 4">Piso 4</option>
-                          <option value="Piso 5">Piso 5</option>
-                          <option value="Piso 6">Piso 6</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Torre o Centro <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={torresP.length === 0}
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.branchP}
+                      onChange={manejarCambioTorre}
+                    >
+                      <option value="">
+                        Seleccione Torre o Centro
+                      </option>
+                      {torresP.map(TowP => (
+                        <option key={TowP.id} value={TowP.nombre}>{TowP.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Ala <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Seleccione Ala 1"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.alaP}
-                        onChange={(e) =>
-                          setFormData({ ...formData, alaP: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Ala
-                        </option>
-                          <option value="Ala Norte">Ala Norte</option>
-                          <option value="Ala Este">Ala Este</option>
-                          <option value="Ala Sur">Ala Sur</option>
-                          <option value="Ala Oeste">Ala Oeste</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Piso <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      disabled={pisoP.length === 0}
+                      required
+                      placeholder="Ej: Piso 1"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.pisoP}
+                      onChange={manejarCambioPisoP}
+                    >
+                        <option value="">
+                        Seleccione Piso
+                      </option>
+                      {pisoP.map(pisoP => (
+                        <option key={pisoP.id} value={pisoP.nombre}>{pisoP.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ala <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      disabled={alaP.length === 0}
+                      required
+                      placeholder="Ej: Seleccione Ala Norte"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.alaP}
+                      onChange={(e) =>
+                        setFormData({ ...formData, alaP: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Ala
+                      </option>
+                      {alaP.map(alaP => (
+                        <option key={alaP.id} value={alaP.nombre}>{alaP.nombre}</option>
+                      ))}
+                    </select>
                   </div>
 
                 </div>
@@ -1120,146 +1260,131 @@ export default function Registro() {
                       </h3>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Región <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                        value={formData.region}
-                        onChange={(e) =>
-                          setFormData({ ...formData, region: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Region
-                        </option>
-                        <option value="Lara">Lara</option>
-                        <option value="Yaracuy">Yaracuy</option>
-                        <option value="Portuguesa">Portuguesa</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Estado <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Lara"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.estado}
-                        onChange={(e) =>
-                          setFormData({ ...formData, estado: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Estado
-                        </option>
-                        <option value="Lara">Lara</option>
-                        <option value="Yaracuy">Yaracuy</option>
-                        <option value="Portuguesa">Portuguesa</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Ciudad <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        className="w-full border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                        value={formData.city}
-                        onChange={(e) =>
-                          setFormData({ ...formData, city: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Ciudad
-                        </option>
-                        <option value="Barquisimeto">Barquisimeto</option>
-                        <option value="Caracas">Caracas</option>
-                        <option value="San Felipe">San Felipe</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Sede / Torre <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Torre Central"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.branch}
-                        onChange={(e) =>
-                          setFormData({ ...formData, branch: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Torre
-                        </option>
-                        <option value="Barquisimeto">Torre 30</option>
-                        <option value="Caracas">Torre Este</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Piso <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Piso 1"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.piso}
-                        onChange={(e) =>
-                          setFormData({ ...formData, piso: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Piso
-                        </option>
-                          <option value="Santa Rosa">Santa Rosa</option>
-                          <option value="Planta Baja">Planta Baja</option>
-                          <option value="MEZZ">MEZZ</option>
-                          <option value="Piso 1">Piso 1</option>
-                          <option value="Piso 2">Piso 2</option>
-                          <option value="Piso 3">Piso 3</option>
-                          <option value="Piso 4">Piso 4</option>
-                          <option value="Piso 5">Piso 5</option>
-                          <option value="Piso 3">Piso 6</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-black mb-2">
-                        Ala <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        type="text"
-                        required
-                        placeholder="Ej: Seleccione Ala 1"
-                        className="w-full bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                        value={formData.ala}
-                        onChange={(e) =>
-                          setFormData({ ...formData, ala: e.target.value })
-                        }
-                      >
-                        <option value="" disabled>
-                          Seleccione Ala
-                        </option>
-                          <option value="Ala Norte">Ala Norte</option>
-                          <option value="Ala Este">Ala Este</option>
-                          <option value="Ala Sur">Ala Sur</option>
-                          <option value="Ala Oeste">Ala Oeste</option>
-                      </select>
-                    </div>
-
+                       <label className="block text-sm font-bold text-black mb-2">
+                      Region <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.region}
+                      onChange={manejarCambioRegion}
+                    >
+                      <option value="">
+                        Seleccione Region
+                      </option>
+                      {region.map(reg => (
+                        <option key={reg.id} value={reg.nombre}>{reg.nombre}</option>
+                      ))}
+                    </select>
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Estado <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={estados.length === 0}
+                      required
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.estado}
+                      onChange={manejarCambioEstado}
+                    >
+                      <option value="">
+                        Seleccione Estado
+                      </option>
+                      {estados.map(est => (
+                        <option key={est.id} value={est.nombre}>{est.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ciudad <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={ciudades.length === 0}
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.city}
+                      onChange={manejarCambioCiudad}
+                    >
+                      <option value="">
+                        Seleccione Ciudad
+                      </option>
+                      {ciudades.map(ciu => (
+                        <option key={ciu.id} value={ciu.nombre}>{ciu.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Torre o Centro <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      disabled={torres.length === 0}
+                      required
+                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
+                      value={form.branch}
+                      onChange={manejarCambioTorre}
+                    >
+                      <option value="">
+                        Seleccione Torre o Centro
+                      </option>
+                      {torres.map(Tow => (
+                        <option key={Tow.id} value={Tow.nombre}>{Tow.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Piso <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      disabled={piso.length === 0}
+                      required
+                      placeholder="Ej: Piso 1"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.piso}
+                      onChange={manejarCambioPiso}
+                    >
+                        <option value="">
+                        Seleccione Piso
+                      </option>
+                      {piso.map(piso => (
+                        <option key={piso.id} value={piso.nombre}>{piso.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-black mb-2">
+                      Ala <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      type="text"
+                      disabled={ala.length === 0}
+                      required
+                      placeholder="Ej: Seleccione Ala Norte"
+                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.ala}
+                      onChange={(e) =>
+                        setFormData({ ...formData, ala: e.target.value })
+                      }
+                    >
+                      <option value="" disabled>
+                        Seleccione Ala
+                      </option>
+                      {ala.map(ala => (
+                        <option key={ala.id} value={ala.nombre}>{ala.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                </div>
 
                 {/* FECHA DE INCORPORACIÓN */}
                 <div className="pt-6 border-t border-gray-200 space-y-6">
@@ -1281,7 +1406,7 @@ export default function Registro() {
                         className="block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-primary-500 text-base border outline-none bg-white"
                       />
                     </div>
-                  
+                  </div>
                   <div>
                     <label
                       htmlFor="description"
@@ -1323,8 +1448,6 @@ export default function Registro() {
                     Guardar Registro
                   </button>
                 </div>
-              </div>
-              </div>
               </div>
             )}
           </form>

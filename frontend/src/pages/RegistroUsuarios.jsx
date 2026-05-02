@@ -120,6 +120,7 @@ export default function RegistroUsuarios() {
   const manejarCambioRegion = (e) => {
     const regionNombre = e.target.value;
     setForm(prev => ({ ...prev, region: regionNombre, estado: '', city: '', branch: '' }));
+    markTouched("region");
     if (regionNombre === 'Occidente') {
       setEstados([{ id: 1, nombre: 'Lara' }]);
     } else if (regionNombre === 'Centro') {
@@ -134,6 +135,7 @@ export default function RegistroUsuarios() {
   const manejarCambioEstado = (e) => {
     const estadoNombre = e.target.value;
     setForm(prev => ({ ...prev, estado: estadoNombre, city: '' }));
+    markTouched("estado");
     if (estadoNombre === 'Lara') {
       setCiudades([{ id: 1, nombre: 'Barquisimeto' }]);
     } else if (estadoNombre === 'Yaracuy') {
@@ -148,6 +150,7 @@ export default function RegistroUsuarios() {
   const manejarCambioCiudad = (e) => {
     const ciudadNombre = e.target.value;
     setForm(prev => ({ ...prev, city: ciudadNombre, branch: '' }));
+    markTouched("city");
     if (ciudadNombre === 'Barquisimeto') {
       setTorres([
         { id: 1, nombre: 'Barquisimeto Centro' },
@@ -163,6 +166,7 @@ export default function RegistroUsuarios() {
     const manejarCambioTorre = (e) => {
     const torreNombre = e.target.value;
     setForm(prev => ({ ...prev, branch: torreNombre }));
+    markTouched("branch");
     if (torreNombre === 'Barquisimeto Centro') {
       setPiso([
         { id: 1, nombre: 'Piso 1' }
@@ -177,6 +181,7 @@ export default function RegistroUsuarios() {
     const manejarCambioPiso = (e) => {
     const pisoNombre = e.target.value;
     setForm(prev => ({ ...prev, piso: pisoNombre }));
+    markTouched("piso");
     if (pisoNombre === 'Piso 1') {
       setAla([{ id: 1, nombre: 'Ala Norte', }, { id: 2, nombre: 'Ala Sur' }]);
     } else {
@@ -188,8 +193,9 @@ export default function RegistroUsuarios() {
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const markTouched = (key) =>
+  function markTouched(key) {
     setTouched((prev) => ({ ...prev, [key]: true }));
+  }
 
   const getState = (key) => {
     const hasError = Boolean(touched[key] && errors[key]);
@@ -561,9 +567,10 @@ export default function RegistroUsuarios() {
                       placeholder="Ej: Seleccione Ala Norte"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
                       value={form.ala}
-                      onChange={(e) =>
-                        setForm({ ...form, ala: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setForm({ ...form, ala: e.target.value });
+                        markTouched("ala");
+                      }}
                     >
                       <option value="" disabled>
                         Seleccione Ala
