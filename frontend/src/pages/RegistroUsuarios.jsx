@@ -1,10 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Header from "../components/layout/Header";
 import { FiSave, FiX } from "react-icons/fi";
-import {useForm} from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { userScheme } from "../validators/userSchema";
-import { z } from "zod";
 
 const initialForm = {
   cedula: "",
@@ -49,6 +45,12 @@ const seedUsers = [
   },
 ];
 
+const torresData = [
+  { id: 1, nombre: "Barquisimeto Centro" },
+  { id: 2, nombre: "Torre Lara" },
+  { id: 3, nombre: "Torre 30" },
+];
+
 function validate(values) {
   const errors = {};
 
@@ -86,9 +88,12 @@ function inputClass({ hasError, isSuccess }) {
     "block w-60 rounded-lg shadow-sm py-2 px-3 text-sm border transition-all outline-none bg-white";
   const focus = "focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
   const error = "border-red-300 focus:ring-red-500 focus:border-red-500";
-  const success = "border-green-300 focus:ring-green-500 focus:border-green-500";
+  const success =
+    "border-green-300 focus:ring-green-500 focus:border-green-500";
   const normal = "border-gray-300";
-  return [base, focus, hasError ? error : isSuccess ? success : normal].join(" ");
+  return [base, focus, hasError ? error : isSuccess ? success : normal].join(
+    " ",
+  );
 }
 
 export default function RegistroUsuarios() {
@@ -97,36 +102,35 @@ export default function RegistroUsuarios() {
   const [focused, setFocused] = useState(null);
   const [users, setUsers] = useState(seedUsers);
 
-  const [region] = useState([
-    { id: 1, nombre: 'Occidente' },
-    { id: 2, nombre: 'Centro'},
-    { id: 3, nombre: 'Llanos'},
-  ]);
-
-  const [torres, setTorres] = useState([]);
+  const [torres, setTorres] = useState(torresData);
   const [piso, setPiso] = useState([]);
-  const [ala, setAla  ] = useState([]);
+  const [ala, setAla] = useState([]);
 
-
-    const manejarCambioTorre = (e) => {
+  const manejarCambioTorre = (e) => {
     const torreNombre = e.target.value;
-    setForm(prev => ({ ...prev, branch: torreNombre }));
-    if (torreNombre === 'Barquisimeto Centro') {
+    setForm((prev) => ({ ...prev, branch: torreNombre }));
+    markTouched("branch");
+    if (torreNombre === "Barquisimeto Centro") {
+      setPiso([{ id: 1, nombre: "Piso 1" }]);
+    } else if (torreNombre === "Torre Lara") {
       setPiso([
-        { id: 1, nombre: 'Piso 1' }
+        { id: 2, nombre: "Piso 1" },
+        { id: 3, nombre: "Piso 6" },
       ]);
-    } else if (torreNombre === 'Torre Lara') {
-      setPiso([{ id: 2, nombre: 'Piso 1' }, { id: 3, nombre: 'Piso 6' }]);
     } else {
       setPiso([]);
     }
   };
 
-    const manejarCambioPiso = (e) => {
+  const manejarCambioPiso = (e) => {
     const pisoNombre = e.target.value;
-    setForm(prev => ({ ...prev, piso: pisoNombre }));
-    if (pisoNombre === 'Piso 1') {
-      setAla([{ id: 1, nombre: 'Ala Norte', }, { id: 2, nombre: 'Ala Sur' }]);
+    setForm((prev) => ({ ...prev, piso: pisoNombre }));
+    markTouched("piso");
+    if (pisoNombre === "Piso 1") {
+      setAla([
+        { id: 1, nombre: "Ala Norte" },
+        { id: 2, nombre: "Ala Sur" },
+      ]);
     } else {
       setAla([]);
     }
@@ -134,10 +138,12 @@ export default function RegistroUsuarios() {
 
   const errors = useMemo(() => validate(form), [form]);
 
-  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const setField = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
-  const markTouched = (key) =>
+  function markTouched(key) {
     setTouched((prev) => ({ ...prev, [key]: true }));
+  }
 
   const getState = (key) => {
     const hasError = Boolean(touched[key] && errors[key]);
@@ -169,9 +175,6 @@ export default function RegistroUsuarios() {
         telefono: form.telefono.trim(),
         usuario: form.usuario.trim(),
         rol: form.rol,
-        region: form.region,
-        estado: form.estado,
-        city: form.city,
         branch: form.branch,
         piso: form.piso,
         ala: form.ala,
@@ -188,7 +191,7 @@ export default function RegistroUsuarios() {
     setForm(initialForm);
     setTouched({});
     setFocused(null);
-    setTorres([]);
+    setTorres(torresData);
     setPiso([]);
     setAla([]);
   };
@@ -233,20 +236,24 @@ export default function RegistroUsuarios() {
                       onChange={(e) => setField("cedula", e.target.value)}
                       onBlur={() => markTouched("cedula")}
                       onFocus={() => setFocused("cedula")}
-                      onInput={() => focused !== "cedula" && setFocused("cedula")}
+                      onInput={() =>
+                        focused !== "cedula" && setFocused("cedula")
+                      }
                       className={inputClass(getState("cedula"))}
                       aria-invalid={getState("cedula").hasError || undefined}
                     />
                     {getState("cedula").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.cedula}</p>
-                    )}
-                    {getState("cedula").isFocused && !getState("cedula").hasError && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Incluye prefijo (ej: V- / E-).
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.cedula}
                       </p>
                     )}
+                    {getState("cedula").isFocused &&
+                      !getState("cedula").hasError && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Incluye prefijo (ej: V- / E-).
+                        </p>
+                      )}
                   </div>
-
 
                   <div className="sm:col-span-1">
                     <label className="block text-sm font-bold text-black mb-2">
@@ -263,7 +270,9 @@ export default function RegistroUsuarios() {
                       aria-invalid={getState("nombre").hasError || undefined}
                     />
                     {getState("nombre").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.nombre}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.nombre}
+                      </p>
                     )}
                   </div>
 
@@ -339,7 +348,9 @@ export default function RegistroUsuarios() {
                       onChange={(e) => setField("rol", e.target.value)}
                       onBlur={() => markTouched("rol")}
                       onFocus={() => setFocused("rol")}
-                      className={inputClass(getState("rol")) + " cursor-pointer"}
+                      className={
+                        inputClass(getState("rol")) + " cursor-pointer"
+                      }
                       aria-invalid={getState("rol").hasError || undefined}
                     >
                       <option value="">-- Selecciona --</option>
@@ -367,7 +378,9 @@ export default function RegistroUsuarios() {
                       aria-invalid={getState("email").hasError || undefined}
                     />
                     {getState("email").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.email}
+                      </p>
                     )}
                   </div>
 
@@ -407,11 +420,11 @@ export default function RegistroUsuarios() {
                       value={form.branch}
                       onChange={manejarCambioTorre}
                     >
-                      <option value="">
-                        Seleccione Torre o Centro
-                      </option>
-                      {torres.map(Tow => (
-                        <option key={Tow.id} value={Tow.nombre}>{Tow.nombre}</option>
+                      <option value="">Seleccione Torre o Centro</option>
+                      {torres.map((Tow) => (
+                        <option key={Tow.id} value={Tow.nombre}>
+                          {Tow.nombre}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -429,11 +442,11 @@ export default function RegistroUsuarios() {
                       value={form.piso}
                       onChange={manejarCambioPiso}
                     >
-                        <option value="">
-                        Seleccione Piso
-                      </option>
-                      {piso.map(piso => (
-                        <option key={piso.id} value={piso.nombre}>{piso.nombre}</option>
+                      <option value="">Seleccione Piso</option>
+                      {piso.map((piso) => (
+                        <option key={piso.id} value={piso.nombre}>
+                          {piso.nombre}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -449,19 +462,19 @@ export default function RegistroUsuarios() {
                       placeholder="Ej: Seleccione Ala Norte"
                       className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
                       value={form.ala}
-                      onChange={(e) =>
-                        setForm({ ...form, ala: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setForm({ ...form, ala: e.target.value });
+                        markTouched("ala");
+                      }}
                     >
-                      <option value="" disabled>
-                        Seleccione Ala
-                      </option>
-                      {ala.map(ala => (
-                        <option key={ala.id} value={ala.nombre}>{ala.nombre}</option>
+                      <option value="">Seleccione Ala</option>
+                      {ala.map((ala) => (
+                        <option key={ala.id} value={ala.nombre}>
+                          {ala.nombre}
+                        </option>
                       ))}
                     </select>
                   </div>
-
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
@@ -508,7 +521,7 @@ export default function RegistroUsuarios() {
                         "Correo",
                         "Sede",
                         "Piso",
-                        "Ala"
+                        "Ala",
                       ].map((h) => (
                         <th
                           key={h}
@@ -589,4 +602,3 @@ export default function RegistroUsuarios() {
     </div>
   );
 }
-
