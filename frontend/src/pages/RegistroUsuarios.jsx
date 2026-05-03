@@ -1,6 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Header from "../components/layout/Header";
 import { FiSave, FiX } from "react-icons/fi";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {userSchema} from "../validators/userSchema";
 
 const initialForm = {
   cedula: "",
@@ -51,150 +54,75 @@ const torresData = [
   { id: 3, nombre: "Torre 30" },
 ];
 
-function validate(values) {
-  const errors = {};
-
-  const required = [
-    "cedula",
-    "nombre",
-    "apellido",
-    "email",
-    "telefono",
-    "usuario",
-    "password",
-    "rol",
-    "branch",
-    "piso",
-    "ala",
-  ];
-
-  for (const key of required) {
-    if (!String(values[key] ?? "").trim()) errors[key] = "Campo obligatorio.";
+const inputClass = ({ hasError, isSuccess }) => `
+  block w-60 rounded-lg shadow-sm py-2 px-3 text-sm border transition-all duration-200 outline-none bg-white
+  hover:border-gray-400
+  ${hasError 
+    ? "border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-500 placeholder-red-300" 
+    : isSuccess
+      ? "border-green-400 focus:ring-2 focus:ring-green-200 focus:border-green-500"
+    : "border-gray-300 focus:ring-2 focus:ring-primary-200 focus:border-primary-500"
   }
-
-  if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Correo inválido.";
-  }
-
-  if (values.password && String(values.password).length < 6) {
-    errors.password = "Mínimo 6 caracteres.";
-  }
-
-  return errors;
-}
-
-function inputClass({ hasError, isSuccess }) {
-  const base =
-    "block w-60 rounded-lg shadow-sm py-2 px-3 text-sm border transition-all outline-none bg-white";
-  const focus = "focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
-  const error = "border-red-300 focus:ring-red-500 focus:border-red-500";
-  const success =
-    "border-green-300 focus:ring-green-500 focus:border-green-500";
-  const normal = "border-gray-300";
-  return [base, focus, hasError ? error : isSuccess ? success : normal].join(
-    " ",
-  );
-}
+`;
 
 export default function RegistroUsuarios() {
-  const [form, setForm] = useState(initialForm);
-  const [touched, setTouched] = useState({});
-  const [focused, setFocused] = useState(null);
+
+  const { register,handleSubmit, formState: { errors }, getFieldState, watch, setValue, reset } = useForm({
+    resolver: zodResolver(userSchema),
+    mode: "onChange",
+    defaultValues: {
+      cedula: "",
+      nombre: "",
+      apellido: "",
+      email: "",
+      telefono: "",
+      usuario: "",
+      password: "",
+      rol: "",
+      branch: "",
+      piso: "",
+      ala: ""
+    }
+  });
+
   const [users, setUsers] = useState(seedUsers);
-
   const [torres, setTorres] = useState(torresData);
-  const [piso, setPiso] = useState([]);
-  const [ala, setAla] = useState([]);
 
-  const manejarCambioTorre = (e) => {
-    const torreNombre = e.target.value;
-    setForm((prev) => ({ ...prev, branch: torreNombre }));
-    markTouched("branch");
-    if (torreNombre === "Barquisimeto Centro") {
-      setPiso([{ id: 1, nombre: "Piso 1" }]);
-    } else if (torreNombre === "Torre Lara") {
-      setPiso([
-        { id: 2, nombre: "Piso 1" },
-        { id: 3, nombre: "Piso 6" },
-      ]);
-    } else {
-      setPiso([]);
-    }
-  };
+  const selectedBranch = watch("branch");
+  const selectedPiso = watch("piso");
 
-  const manejarCambioPiso = (e) => {
-    const pisoNombre = e.target.value;
-    setForm((prev) => ({ ...prev, piso: pisoNombre }));
-    markTouched("piso");
-    if (pisoNombre === "Piso 1") {
-      setAla([
-        { id: 1, nombre: "Ala Norte" },
-        { id: 2, nombre: "Ala Sur" },
-      ]);
-    } else {
-      setAla([]);
-    }
-  };
+  const piso = selectedBranch === "Barquisimeto Centro"
+  ? [{ id: 1, nombre: "Piso 3" }]
+      : selectedBranch === "Torre Lara"
+        ? [{ id: 2, nombre: "Piso 1" }, { id: 3, nombre: "Piso 6" }]
+            :[];
+      
 
-  const errors = useMemo(() => validate(form), [form]);
+    const ala = selectedPiso === "Piso 1" || selectedPiso === "Piso 6"
+    ? [{ id: 1, nombre: "Ala Norte" }, { id: 2, nombre: "Ala Sur" }]
+        :[];
 
-  const setField = (key, value) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => { setValue("piso", ""); setValue("ala", ""); }, [selectedBranch]);
+  useEffect(() => { setValue("ala", ""); }, [selectedPiso,setValue]);
 
-  function markTouched(key) {
-    setTouched((prev) => ({ ...prev, [key]: true }));
-  }
-
-  const getState = (key) => {
-    const hasError = Boolean(touched[key] && errors[key]);
-    const isSuccess =
-      Boolean(touched[key]) && !errors[key] && String(form[key] ?? "").trim();
-    const isFocused = focused === key;
-    return { hasError, isSuccess, isFocused };
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const nextTouched = Object.keys(initialForm).reduce((acc, k) => {
-      acc[k] = true;
-      return acc;
-    }, {});
-    setTouched(nextTouched);
-
-    const currentErrors = validate(form);
-    if (Object.keys(currentErrors).length > 0) return;
-
+  const onSubmit = (data) => {
     setUsers((prev) => [
-      {
-        id: prev.length ? Math.max(...prev.map((u) => u.id)) + 1 : 1,
-        cedula: form.cedula.trim(),
-        nombre: form.nombre.trim(),
-        apellido: form.apellido.trim(),
-        email: form.email.trim(),
-        telefono: form.telefono.trim(),
-        usuario: form.usuario.trim(),
-        rol: form.rol,
-        branch: form.branch,
-        piso: form.piso,
-        ala: form.ala,
-      },
+      { id: prev.length ? Math.max(...prev.map((u) => u.id)) + 1 : 1, ...data },
       ...prev,
     ]);
-
-    setForm(initialForm);
-    setTouched({});
-    setFocused(null);
+    reset();
   };
 
-  const handleReset = () => {
-    setForm(initialForm);
-    setTouched({});
-    setFocused(null);
-    setTorres(torresData);
-    setPiso([]);
-    setAla([]);
-  };
+  const getFieldProps = (name) => {
+    const state = getFieldState(name);
+    return {
+      className: inputClass({
+        hasError: state.invalid,
+        isSuccess: state.isDirty && !state.invalid,
+      }),
+      error: state.invalid ? errors[name]?.message : null,
+    };
+      };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -223,186 +151,106 @@ export default function RegistroUsuarios() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="sm:col-span-1">
+              <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Cédula <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="V-12345678"
-                      value={form.cedula}
-                      onChange={(e) => setField("cedula", e.target.value)}
-                      onBlur={() => markTouched("cedula")}
-                      onFocus={() => setFocused("cedula")}
-                      onInput={() =>
-                        focused !== "cedula" && setFocused("cedula")
-                      }
-                      className={inputClass(getState("cedula"))}
-                      aria-invalid={getState("cedula").hasError || undefined}
+                      {...register("cedula")} className={getFieldProps("cedula").className}
                     />
-                    {getState("cedula").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.cedula}
-                      </p>
-                    )}
-                    {getState("cedula").isFocused &&
-                      !getState("cedula").hasError && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Incluye prefijo (ej: V- / E-).
-                        </p>
-                      )}
+                    {getFieldProps("cedula").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("cedula").error}</p>} 
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Nombre <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Nombre"
-                      value={form.nombre}
-                      onChange={(e) => setField("nombre", e.target.value)}
-                      onBlur={() => markTouched("nombre")}
-                      onFocus={() => setFocused("nombre")}
-                      className={inputClass(getState("nombre"))}
-                      aria-invalid={getState("nombre").hasError || undefined}
+                      {...register("nombre")} className={getFieldProps("nombre").className}
                     />
-                    {getState("nombre").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.nombre}
-                      </p>
-                    )}
+                    {getFieldProps("nombre").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("nombre").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Apellido <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Apellido"
-                      value={form.apellido}
-                      onChange={(e) => setField("apellido", e.target.value)}
-                      onBlur={() => markTouched("apellido")}
-                      onFocus={() => setFocused("apellido")}
-                      className={inputClass(getState("apellido"))}
-                      aria-invalid={getState("apellido").hasError || undefined}
+                      {...register("apellido")} className={getFieldProps("apellido").className}
                     />
-                    {getState("apellido").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.apellido}
-                      </p>
-                    )}
+                    {getFieldProps("apellido").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("apellido").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Teléfono <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
                       placeholder="04XX-XXXXXXX"
-                      value={form.telefono}
-                      onChange={(e) => setField("telefono", e.target.value)}
-                      onBlur={() => markTouched("telefono")}
-                      onFocus={() => setFocused("telefono")}
-                      className={inputClass(getState("telefono"))}
-                      aria-invalid={getState("telefono").hasError || undefined}
+                      {...register("telefono")} className={getFieldProps("telefono").className}
                     />
-                    {getState("telefono").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.telefono}
-                      </p>
-                    )}
+                    {getFieldProps("telefono").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("telefono").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Usuario <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Usuario"
-                      value={form.usuario}
-                      onChange={(e) => setField("usuario", e.target.value)}
-                      onBlur={() => markTouched("usuario")}
-                      onFocus={() => setFocused("usuario")}
-                      className={inputClass(getState("usuario"))}
-                      aria-invalid={getState("usuario").hasError || undefined}
+                      {...register("usuario")} className={getFieldProps("usuario").className}
                     />
-                    {getState("usuario").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.usuario}
-                      </p>
-                    )}
+                    {getFieldProps("usuario").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("usuario").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Rol <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={form.rol}
-                      onChange={(e) => setField("rol", e.target.value)}
-                      onBlur={() => markTouched("rol")}
-                      onFocus={() => setFocused("rol")}
-                      className={
-                        inputClass(getState("rol")) + " cursor-pointer"
-                      }
-                      aria-invalid={getState("rol").hasError || undefined}
+                      {...register("rol")} className={getFieldProps("rol").className}
                     >
                       <option value="">-- Selecciona --</option>
                       <option value="Superadmin">Superadmin</option>
                       <option value="Admin">Admin</option>
-                      <option value="Admin">Visualizador</option>
+                      <option value="Visualizador">Visualizador</option>
                     </select>
-                    {getState("rol").hasError && (
-                      <p className="text-xs text-red-600 mt-1">{errors.rol}</p>
-                    )}
+                    {getFieldProps("rol").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("rol").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Correo Electrónico <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
                       placeholder="nombre.apellido@cantv.com"
-                      value={form.email}
-                      onChange={(e) => setField("email", e.target.value)}
-                      onBlur={() => markTouched("email")}
-                      onFocus={() => setFocused("email")}
-                      className={inputClass(getState("email"))}
-                      aria-invalid={getState("email").hasError || undefined}
+                      {...register("email")} className={getFieldProps("email").className}
                     />
-                    {getState("email").hasError && (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.email}
-                      </p>
-                    )}
+                    {getFieldProps("email").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("email").error}</p>}
                   </div>
 
-                  <div className="sm:col-span-1">
+                  <div >
                     <label className="block text-sm font-bold text-black mb-2">
                       Contraseña <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
                       placeholder="••••••••"
-                      value={form.password}
-                      onChange={(e) => setField("password", e.target.value)}
-                      onBlur={() => markTouched("password")}
-                      onFocus={() => setFocused("password")}
-                      className={inputClass(getState("password"))}
-                      aria-invalid={getState("password").hasError || undefined}
+                      {...register("password")} className={getFieldProps("password").className}
                     />
-                    {getState("password").hasError ? (
-                      <p className="text-xs text-red-600 mt-1">
-                        {errors.password}
-                      </p>
-                    ) : (
+                    {getFieldProps("password").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("password").error}</p>}
+                    {!getFieldProps("password").error && (
                       <p className="text-xs text-gray-500 mt-1">
                         Mínimo 6 caracteres.
                       </p>
@@ -414,11 +262,7 @@ export default function RegistroUsuarios() {
                       Torre o Centro <span className="text-red-500">*</span>
                     </label>
                     <select
-                      disabled={torres.length === 0}
-                      required
-                      className="w-60 border-gray-300 rounded-lg py-2 px-3 border outline-none bg-white focus:ring-2 focus:ring-primary-500"
-                      value={form.branch}
-                      onChange={manejarCambioTorre}
+                      {...register("branch")} className={getFieldProps("branch").className}
                     >
                       <option value="">Seleccione Torre o Centro</option>
                       {torres.map((Tow) => (
@@ -427,6 +271,7 @@ export default function RegistroUsuarios() {
                         </option>
                       ))}
                     </select>
+                    {getFieldProps("branch").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("branch").error}</p>}
                   </div>
 
                   <div>
@@ -434,13 +279,7 @@ export default function RegistroUsuarios() {
                       Piso <span className="text-red-500">*</span>
                     </label>
                     <select
-                      type="text"
-                      disabled={piso.length === 0}
-                      required
-                      placeholder="Ej: Piso 1"
-                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.piso}
-                      onChange={manejarCambioPiso}
+                    {...register("piso")} className={getFieldProps("piso").className}
                     >
                       <option value="">Seleccione Piso</option>
                       {piso.map((piso) => (
@@ -449,6 +288,7 @@ export default function RegistroUsuarios() {
                         </option>
                       ))}
                     </select>
+                    {getFieldProps("piso").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("piso").error}</p>}
                   </div>
 
                   <div>
@@ -456,16 +296,7 @@ export default function RegistroUsuarios() {
                       Ala <span className="text-red-500">*</span>
                     </label>
                     <select
-                      type="text"
-                      disabled={ala.length === 0}
-                      required
-                      placeholder="Ej: Seleccione Ala Norte"
-                      className="w-60 bg-white border-gray-300 rounded-lg py-2 px-3 border outline-none focus:ring-2 focus:ring-primary-500"
-                      value={form.ala}
-                      onChange={(e) => {
-                        setForm({ ...form, ala: e.target.value });
-                        markTouched("ala");
-                      }}
+                    {...register("ala")} className={getFieldProps("ala").className}
                     >
                       <option value="">Seleccione Ala</option>
                       {ala.map((ala) => (
@@ -474,24 +305,25 @@ export default function RegistroUsuarios() {
                         </option>
                       ))}
                     </select>
+                    {getFieldProps("ala").error && <p className="text-xs text-red-600 mt-1">{getFieldProps("ala").error}</p>}
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                   <button
                     type="button"
-                    onClick={handleReset}
-                    className="group inline-flex items-center justify-center px-6 py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md"
+                    onClick={() => reset()}
+                    className="w-full sm:w-auto group inline-flex items-center justify-center px-6 py-3 sm:py-2.5 border border-gray-300 shadow-sm text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md"
                   >
                     <FiX className="mr-2 -ml-1 h-4 w-4 group-hover:text-red-600 transition-colors" />
                     Limpiar
                   </button>
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 sm:py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md"
                   >
                     <FiSave className="mr-2 -ml-1 h-4 w-4" />
-                    Guardar Usuario
+                    Guardar
                   </button>
                 </div>
               </form>
@@ -501,14 +333,14 @@ export default function RegistroUsuarios() {
           {/* Tabla */}
           <section>
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="px-6 sm:px-8 py-5 border-b border-gray-200 bg-gray-50">
+              <div className="px-4 sm:px-8 py-5 border-b border-gray-200 bg-gray-50">
                 <h2 className="text-lg font-bold text-gray-900">
                   Usuarios Registrados
                 </h2>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="min-w-[980px] w-full divide-y divide-gray-200">
+                <table className="min-w-[768px] w-full divide-y divide-gray-200">
                   <thead className="bg-white">
                     <tr>
                       {[
@@ -526,7 +358,7 @@ export default function RegistroUsuarios() {
                         <th
                           key={h}
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           {h}
                         </th>
@@ -540,22 +372,22 @@ export default function RegistroUsuarios() {
                         key={u.id}
                         className="hover:bg-gray-50 transition-colors"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">
                           {u.cedula}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {u.nombre}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.apellido}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.telefono}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.usuario}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <span
                             className={
                               "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold " +
@@ -567,16 +399,16 @@ export default function RegistroUsuarios() {
                             {u.rol}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.branch}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.piso}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {u.ala}
                         </td>
                       </tr>
