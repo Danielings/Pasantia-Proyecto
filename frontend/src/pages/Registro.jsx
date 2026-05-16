@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import Header from "../components/layout/Header";
 import { FiSave, FiX } from "react-icons/fi";
-// Importamos los iconos de búsqueda ya no es necesario aquí, se movió a SerialSearchInput
-// import { CiSearch } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";

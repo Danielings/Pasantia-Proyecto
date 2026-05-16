@@ -38,6 +38,19 @@ Router.get("/estados/:id/ciudades", async (req, res) => {
   }
 });
 
+//api para traer las ciudades sin necesidad de tener el id del estado
+
+Router.get("/ciudades", async (req, res) => {
+  try {
+    const query = `SELECT id_ciudad, ciudad FROM ciudades WHERE capital = 1 ORDER BY ciudad`;
+    const [rows] = await pool.execute(query);
+    res.status(200).json(rows);
+  } catch (e) {
+    console.error("Lol. No se obtuvo nada", e);
+    res.status(500).json({ message: "Error interno" });
+  }
+});
+
 Router.get("/ciudades/:id/sede", async (req, res) => {
   const id = req.params.id;
   try {

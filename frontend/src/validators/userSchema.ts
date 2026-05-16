@@ -1,46 +1,62 @@
-import {z} from "zod";
+import { z } from "zod";
 
 export const userSchema = z.object({
-    cedula: z.string()
+  cedula: z
+    .string()
     .min(1, "La cédula es requerida")
-    .regex(/^[VE]-\d{7,8}$/, "La cédula debe ser del formato V-12345678 o E-12345678"),
+    .regex(
+      /^[VE]-\d{7,8}$/,
+      "La cédula debe ser del formato V-12345678 o E-12345678",
+    ),
 
-    nombre: z.string()
+  nombre: z
+    .string()
     .min(1, "El nombre es requerido")
     .regex(/^[a-zA-Z\s]+$/, "El nombre solo puede contener letras y espacios"),
 
-    apellido: z.string()
+  apellido: z
+    .string()
     .min(1, "El apellido es requerido")
-    .regex(/^[a-zA-Z\s]+$/, "El apellido solo puede contener letras y espacios"),
+    .regex(
+      /^[a-zA-Z\s]+$/,
+      "El apellido solo puede contener letras y espacios",
+    ),
 
-    email: z.string()
+  email: z
+    .string()
     .min(1, "El correo electrónico es requerido")
     .email("El correo electrónico no es válido"),
 
-    telefono: z.string()
+  telefono: z
+    .string()
     .min(1, "El teléfono es requerido")
-    .regex(/^(0414|0416|0424|0426|0412)\d{7}$/, "El teléfono debe contener solo números y comenzar con 0414, 0416, 0424, 0426 o 0412"),
+    .regex(
+      /^(0414|0416|0424|0426|0412)\d{7}$/,
+      "El teléfono debe contener solo números y comenzar con 0414, 0416, 0424, 0426 o 0412",
+    ),
 
-    usuario: z.string()
+  usuario: z
+    .string()
     .min(1, "El nombre de usuario es requerido")
     .min(4, "El nombre de usuario debe tener al menos 4 caracteres"),
 
-    password: z.string()
+  password: z
+    .string()
     .min(1, "La contraseña es requerida")
     .min(6, "La contraseña debe tener al menos 6 caracteres"),
 
-    rol: z.enum(["Admin", "Superadmin", "Visualizador"], "debe seleccionar un rol"),
+  rol: z.enum(
+    ["Admin", "Superadmin", "Visualizador"],
+    "debe seleccionar un rol",
+  ),
+  region: z.string().min(1, "La region es requerida"),
+  city: z.string().min(1, "La ciudad es requerida"),
+  estado: z.string().min(1, "el estado es requerido"),
+  sede: z.string().min(1, "La sucursal es requerida"),
 
-    branch: z.string()
-    .min(1, "La sucursal es requerida"),
+  piso: z.string().min(1, "El piso es requerido"),
 
-    piso: z.string()
-    .min(1, "El piso es requerido"),
-
-    ala: z.string()
-    .min(1, "El ala es requerida"),
-
-
+  ala: z.string().min(1, "El ala es requerida"),
 });
 
 export type UserFormData = z.infer<typeof userSchema>;
