@@ -7,6 +7,7 @@ import Registro from './pages/Registro';
 import Perfil from './pages/Perfil';
 import RegistroUsuarios from "./pages/RegistroUsuarios";
 import RecuperarPassword from "./pages/Recuperar-Password";
+import NuevaPassword from "./pages/NuevaPassword";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/registro-usuarios" element={<RegistroUsuarios />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/recuperar-password" element={<RecuperarPassword />} />
+        <Route path="/nueva-password" element={<NuevaPassword />} />
       </Routes>
     </Router>
   );

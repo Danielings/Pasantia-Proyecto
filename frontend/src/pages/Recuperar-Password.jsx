@@ -1,11 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiCpu } from "react-icons/fi";
+import { FiMail } from "react-icons/fi";
 import { CloseButton } from "../components/ui/button-close";
+import axios from "axios";
+
+const API_URL = "http://localhost:3001/api";
 
 export default function RecuperarPassword() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ username: "" });
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await axios.post(`${API_URL}/recuperar-password`, {
+        email,
+      });
+      setMessage(response.data.message);
+      setEmail("");
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Error al enviar el correo de recuperación. Intenta más tarde.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleClose = () => {
     navigate("/login");
@@ -33,11 +61,11 @@ export default function RecuperarPassword() {
               </p>
             </div>
 
-            <form onSubmit={handleClose} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label
                   className="block text-sm font-medium text-gray-700 mb-2"
-                  htmlFor="username"
+                  htmlFor="email"
                 >
                   Correo electrónico
                 </label>
@@ -46,24 +74,30 @@ export default function RecuperarPassword() {
                     <FiMail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="username"
-                    type="username"
+                    id="email"
+                    type="email"
                     required
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
                     placeholder="gol@gol.com"
                   />
                 </div>
               </div>
 
+                  {message && (
+                    <p className="text-sm text-green-600 text-center">{message}</p>
+                  )}
+              {error && (
+                <p className="text-sm text-red-600 text-center">{error}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all active:scale-[0.98]"
+                disabled={loading}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all active:scale-[0.98] disabled:opacity-60"
               >
-                Enviar Codigo
+                {loading ? "Enviando..." : "Enviar código"}
               </button>
             </form>
           </div>
