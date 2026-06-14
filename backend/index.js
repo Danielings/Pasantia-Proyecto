@@ -6,11 +6,15 @@ import { getTransporter } from "./config/mailer.js";
 import perifericos from "./apis/perifericos.js";
 import ubicacion from "./apis/ubicacion.js";
 import usuarios from "./apis/usuarios.js";
+import equipos from "./apis/equipos.js";
+import bitacora from "./apis/bitacora.js";
 import recuperarPassword from "./apis/recuperarPassword.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const PORT = 3001;
 const app = express();
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -35,6 +39,8 @@ app.use("/api", perifericos);
 app.use("/api", ubicacion);
 app.use("/api", usuarios);
 app.use("/api", recuperarPassword);
+app.use("/api", equipos);
+app.use("/api", bitacora);
 
 const server = app.listen(PORT, () => {
   const smtpUser = env("SMTP_USER");

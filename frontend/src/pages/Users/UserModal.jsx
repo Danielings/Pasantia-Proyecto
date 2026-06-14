@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LocationSelector from "@/components/ui/LocationSelector";
 import { userSchema } from "../../validators/userSchema";
-import {toast} from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export default function UserModal({
   isOpen,
@@ -119,29 +119,29 @@ export default function UserModal({
   // EDITAR USUARIO
   // =========================
   const onSubmitEdit = async (data) => {
-    
-      const payload = {
-        cedula: data.cedula,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        correo: data.email,
-        telefono: data.telefono,
+    const payload = {
+      cedula: data.cedula,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      correo: data.email,
+      telefono: data.telefono,
 
-        username: data.usuario,
-        password: data.password,
-        rol: data.rol,
+      username: data.usuario,
+      password: data.password,
+      rol: data.rol,
 
-        id_region: Number(data.region),
-        id_estado: Number(data.estado),
-        id_ciudad: Number(data.city),
-        id_sede: Number(data.sede),
-        id_piso: Number(data.piso),
-        id_ala: Number(data.ala),
-      };
+      region: String(data.region),
+      estado: String(data.estado),
+      ciudad: String(data.city),
+      sede: String(data.sede),
+      piso: String(data.piso),
+      ala: String(data.ala),
+    };
 
     const peticionEdicion = axios.put(
       `http://localhost:3001/api/usuarios/${user.id_usuario}`,
       payload,
+      { withCredentials: true },
     );
 
     toast.promise(peticionEdicion, {
@@ -153,7 +153,7 @@ export default function UserModal({
       },
       error: (error) => {
         return error.response?.data?.message || "Error al editar el usuario";
-      }
+      },
     });
   };
 
@@ -163,6 +163,7 @@ export default function UserModal({
   const handleDelete = async () => {
     const peticionEliminacion = axios.put(
       `http://localhost:3001/api/usuarios/eliminado/${user.id_usuario}`,
+      { withCredentials: true },
     );
     toast.promise(peticionEliminacion, {
       loading: "Eliminando usuario...",
@@ -173,7 +174,7 @@ export default function UserModal({
       },
       error: (error) => {
         return error.response?.data?.message || "Error al eliminar el usuario";
-      }
+      },
     });
   };
   const ubicacionTexto = user

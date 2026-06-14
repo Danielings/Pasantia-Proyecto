@@ -1,22 +1,47 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiMail, FiLock, FiCpu } from "react-icons/fi";
-import {toast} from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import Axios from "axios";
+import { useAuth } from "../controllers/AuthContext";
 
 export default function Login() {
+  const { loginGlobal } = useAuth();
+  const [loading, setLoading] = useState(false); // Estado para feedback visual
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ username: "", password: "" });
-
-  const handleLogin = (e) => {
+  const [formData, setFormData] = useState({ correo: "", password: "" });
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!formData.username || !formData.password) {
-      toast.error("Credenciales inválidas. Por favor completa los campos.");
-      return;
-    }
-      toast.success("Inicio de sesión exitoso");
-      navigate("/dashboard");
-  };
+    setLoading(true);
 
+    // Creamos una notificación de carga (opcional pero muy pro)
+    const toastId = toast.loading("Verificando credenciales...");
+
+    try {
+      const response = await Axios.post(
+        "http://localhost:3001/api/login",
+        {
+          correo: formData.correo,
+          password: formData.password,
+        },
+        {
+          withCredentials: true, // <--- ¡AQUÍ ES DONDE DEBE IR!
+        },
+      );
+
+      if (response.status === 200) {
+        toast.success("¡Bienvenido de nuevo!", { id: toastId });
+        loginGlobal(response.data.user);
+        setTimeout(() => navigate("/dashboard"), 1500);
+      }
+    } catch (error) {
+      const mensajeError =
+        error.response?.data?.message || "Error de conexión con el servidor";
+      toast.error(mensajeError, { id: toastId }); // Reemplaza el loading por error
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-white">
       <div className="flex w-full min-h-screen items-center justify-center p-4 bg-[linear-gradient(45deg,#56ccf2,#51c3f1,#4cb9f1,#47b0f0,#43a6f0,#3e9def,#3993ee,#348aee,#2f80ed)]">
@@ -49,12 +74,12 @@ export default function Login() {
                     <FiMail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="username"
-                    type="username"
+                    id="correo"
+                    type="correo"
                     required
-                    value={formData.username}
+                    value={formData.correo}
                     onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
+                      setFormData({ ...formData, correo: e.target.value })
                     }
                     className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
                     placeholder="golazo7"

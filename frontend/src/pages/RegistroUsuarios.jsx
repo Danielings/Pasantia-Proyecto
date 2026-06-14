@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema } from "../validators/userSchema";
 import UserModal from "./Users/UserModal";
-import {toast} from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 // Importación del selector de ubicación
 import LocationSelector from "../components/ui/LocationSelector";
@@ -150,27 +150,27 @@ export default function RegistroUsuarios() {
   };
 
   const onSubmit = async (data) => {
-    
-      const payload = {
-        id_region: Number(data.region) || null,
-        id_estado: Number(data.estado) || null,
-        id_ciudad: Number(data.city || data.id_ciudad) || null,
-        id_sede: Number(data.sede) || null,
-        id_piso: Number(data.piso) || null,
-        username: data.usuario,
-        password: data.password,
-        rol: data.rol,
-        cedula: data.cedula,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        correo: data.email,
-        telefono: data.telefono,
-        estado_persona: "activo",
-      };
-      
-      const peticionRegistro = axios.post(
+    const payload = {
+      region: String(data.region) || null,
+      estado: String(data.estado) || null,
+      ciudad: String(data.city || data.id_ciudad) || null,
+      sede: String(data.sede) || null,
+      piso: String(data.piso) || null,
+      username: data.usuario,
+      password: data.password,
+      rol: data.rol,
+      cedula: data.cedula,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      correo: data.email,
+      telefono: data.telefono,
+      estado_persona: "activo",
+    };
+    console.log(payload);
+
+    const peticionRegistro = axios.post(
       "http://localhost:3001/api/usuarios",
-      payload
+      payload,
     );
 
     toast.promise(peticionRegistro, {
@@ -182,7 +182,7 @@ export default function RegistroUsuarios() {
       },
       error: (error) => {
         return error.response?.data?.message || "Error al registrar el usuario";
-      }
+      },
     });
   };
 
@@ -193,7 +193,7 @@ export default function RegistroUsuarios() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
-            Registro de Usuarios
+            Gestión de Usuarios
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             Crea usuarios y visualiza el listado de registrados.

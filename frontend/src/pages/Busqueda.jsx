@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/layout/Header";
+import EquipoModal from "./Equipos/EquiposModal";
 import axios from "axios";
 import {
   FiSearch,
@@ -11,6 +12,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
+import { EqualIcon } from "lucide-react";
 
 export default function Busqueda() {
   const [equipos, setEquipos] = useState([]);
@@ -27,12 +29,52 @@ export default function Busqueda() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Nuevos estados para controlar los modales
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    action: null, // "view", "edit", "delete"
+    itemData: null, // Datos limpios con su ID y categoría
+  });
+
+  // Función adaptada para buscar por ID y tabla específica
+  const handleOpenModal = (action, item) => {
+    // 1. Extraemos el ID exacto (soporta diferentes nombres de columna que pueda devolver la BD)
+    const itemId = item.id_equipo || item.id_periferico || item.id;
+
+    // 2. Determinamos la tabla/endpoint basándonos en el tipo de componente
+    // Ej: Si item.tipo es "Laptop", la categoría será "laptop"
+    const categoria = item.tipo ? item.tipo.toLowerCase() : "componentes";
+
+    console.log(`Acción: ${action} | ID: ${itemId} | Tabla: ${categoria}`);
+
+    // 3. Guardamos los datos procesados en el estado para que el Modal los consuma
+    setModalState({
+      isOpen: true,
+      action: action,
+      itemData: {
+        ...item,
+        itemId,
+        categoria,
+      },
+    });
+
+    // Cerramos el menú desplegable
+    setActiveDropdown(null);
+  };
+  const handleCloseModal = () => {
+    setModalState({
+      isOpen: false,
+      action: null,
+      itemData: null,
+    });
+  };
   // Fetch a la API
   useEffect(() => {
     const fetchEquipos = async () => {
       try {
         const response = await axios.get(
           "http://localhost:3001/api/componentes",
+          { withCredentials: true },
         );
         if (Array.isArray(response.data)) {
           setEquipos(response.data);
@@ -71,10 +113,8 @@ export default function Busqueda() {
     setActiveDropdown(activeDropdown === id ? null : id);
   };
 
-  const handleOpenModal = (action, equipo) => {
-    console.log(`Abriendo modal de ${action} para el equipo:`, equipo);
-    setActiveDropdown(null);
-  };
+  // Función auxiliar para obtener un ID único seguro para las keys y dropdowns
+  const getUniqueId = (item) => item.id_equipo || item.id_periferico || item.id;
 
   // Filtrado reactivo
   const filteredData = equipos.filter((item) => {
@@ -86,8 +126,7 @@ export default function Busqueda() {
       safeSerial.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      selectedStatuses.length === 0 ||
-      selectedStatuses.includes(item.estado_componente);
+      selectedStatuses.length === 0 || selectedStatuses.includes(item.estado);
     const matchesType =
       selectedTypes.length === 0 || selectedTypes.includes(item.tipo);
     const matchesModel =
@@ -123,7 +162,7 @@ export default function Busqueda() {
       "Monitor",
     ],
     models: ["Vit", "Lenovo"],
-    locations: ["Torre 30", "Torre Centro"],
+    locations: ["Torre 30", "Torre CANTV"],
   };
 
   return (
@@ -320,7 +359,7 @@ export default function Busqueda() {
           <div className="block md:hidden divide-y divide-slate-100">
             {currentItems.map((item) => (
               <div
-                key={`${item.tipo}-${item.id}`}
+                key={`${item.tipo}-${getUniqueId(item)}`}
                 className="p-4 flex flex-col gap-3 bg-white relative"
               >
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -336,13 +375,15 @@ export default function Busqueda() {
 
                   <div className="relative">
                     <button
-                      onClick={() => toggleDropdown(`${item.tipo}-${item.id}`)}
+                      onClick={() =>
+                        toggleDropdown(`${item.tipo}-${getUniqueId(item)}`)
+                      }
                       className="text-slate-400 hover:text-slate-900 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
                     >
                       <FiMoreVertical className="w-5 h-5" />
                     </button>
 
-                    {activeDropdown === `${item.tipo}-${item.id}` && (
+                    {activeDropdown === `${item.tipo}-${getUniqueId(item)}` && (
                       <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-xl border border-slate-200 z-[9999]">
                         <button
                           onClick={() => handleOpenModal("view", item)}
@@ -409,19 +450,19 @@ export default function Busqueda() {
 
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tracking-wide ${
-                      item.estado_componente === "Bueno"
+                      item.estado === "Bueno"
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                         : "bg-rose-50 text-rose-700 border border-rose-100"
                     }`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                        item.estado_componente === "Bueno"
+                        item.estado === "Bueno"
                           ? "bg-emerald-500"
                           : "bg-rose-500"
                       }`}
                     />
-                    {item.estado_componente}
+                    {item.estado}
                   </span>
                 </div>
               </div>
@@ -475,7 +516,7 @@ export default function Busqueda() {
               <tbody className="bg-white divide-y divide-slate-100">
                 {currentItems.map((item) => (
                   <tr
-                    key={`${item.tipo}-${item.id}`}
+                    key={`${item.tipo}-${getUniqueId(item)}`}
                     className="hover:bg-slate-50/50 transition-colors duration-150"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
@@ -507,33 +548,34 @@ export default function Busqueda() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tracking-wide ${
-                          item.estado_componente === "Bueno"
+                          item.estado === "Bueno"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                             : "bg-rose-50 text-rose-700 border border-rose-100"
                         }`}
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                            item.estado_componente === "Bueno"
+                            item.estado === "Bueno"
                               ? "bg-emerald-500"
                               : "bg-rose-500"
                           }`}
                         />
-                        {item.estado_componente}
+                        {item.estado}
                       </span>
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-right relative">
                       <button
                         onClick={() =>
-                          toggleDropdown(`${item.tipo}-${item.id}`)
+                          toggleDropdown(`${item.tipo}-${getUniqueId(item)}`)
                         }
                         className="text-slate-400 hover:text-slate-900 p-2 rounded-full hover:bg-slate-100"
                       >
                         <FiMoreVertical className="w-5 h-5 mx-auto" />
                       </button>
 
-                      {activeDropdown === `${item.tipo}-${item.id}` && (
+                      {activeDropdown ===
+                        `${item.tipo}-${getUniqueId(item)}` && (
                         <div className="absolute right-12 top-0 w-40 bg-white rounded-xl shadow-xl border border-slate-200 z-[9999]">
                           <button
                             onClick={() => handleOpenModal("view", item)}
@@ -621,6 +663,13 @@ export default function Busqueda() {
           )}
         </div>
       </main>
+      <EquipoModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        item={modalState.itemData}
+        type={modalState.action}
+        categoria={modalState.itemData?.categoria}
+      />
     </div>
   );
 }

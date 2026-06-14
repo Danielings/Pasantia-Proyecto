@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
+import Axios from "axios";
 import { FiCpu, FiUser } from "react-icons/fi";
 import { Menu, X, UserIcon, LogOutIcon } from "lucide-react";
 import { Button } from "../ui/button";
+import { useAuth } from "../../controllers/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,7 @@ const listItems = [
 ];
 
 export default function Header() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -32,11 +35,16 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const handleAction = (item) => {
-    if (item.property === "Sign Out") {
-      navigate("/login");
-    } else if (item.path) {
-      navigate(item.path);
+  const handleLogout = async () => {
+    try {
+      await Axios.post(
+        "http://localhost:3001/api/logout",
+        {},
+        { withCredentials: true },
+      );
+      navigate("/");
+    } catch (error) {
+      console.error("Error al cerrar sesión", error);
     }
   };
   const getNavClass = ({ isActive }) =>
@@ -72,8 +80,13 @@ export default function Header() {
               <NavLink to="/registro" className={getNavClass}>
                 Registro de Equipo
               </NavLink>
-              <NavLink to="/registro-usuarios" className={getNavClass}>
-                Registro de Usuarios
+              {user?.rol === "Superadministrador" && (
+                <NavLink to="/registro-usuarios" className={getNavClass}>
+                  Gestión de Usuarios
+                </NavLink>
+              )}
+              <NavLink to="/bitacora" className={getNavClass}>
+                Bitácora
               </NavLink>
             </nav>
           </div>
@@ -87,7 +100,11 @@ export default function Header() {
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((v) => !v)}
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </button>
 
             {/* Perfil */}
@@ -114,7 +131,13 @@ export default function Header() {
                   {listItems.map((item, index) => (
                     <DropdownMenuItem
                       key={index}
-                      onSelect={() => handleAction(item)}
+                      onSelect={() => {
+                        if (item.property === "Sign Out") {
+                          handleLogout();
+                        } else if (item.property === "Profile") {
+                          navigate("/perfil");
+                        }
+                      }}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       <span className="text-popover-foreground">

@@ -13,9 +13,13 @@
 	"dependencies": {
 		"bcrypt": "6.0.0",
 		"bcryptjs": "^3.0.3",
+		"cookie-parser": "^1.4.7",
 		"cors": "2.8.6",
+		"crypto": "^1.0.1",
 		"dotenv": "17.4.2",
 		"express": "5.2.1",
+		"firebase": "^12.14.0",
+		"firebase-admin": "^13.10.0",
 		"jsonwebtoken": "9.0.3",
 		"mysql": "2.18.1",
 		"mysql2": "3.22.2",

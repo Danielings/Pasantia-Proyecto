@@ -92,6 +92,7 @@ export default function Registro() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Datos que llegan al Zod:", formData);
 
     try {
       // 1. Validación de Zod
@@ -109,129 +110,132 @@ export default function Registro() {
 
     const tipoDispositivo = formData.type.toUpperCase();
 
-      // 2. Estructura Base para TODOS los equipos (PC, Laptop o Periféricos)
-      const payload = {
-        marca: formData.name.trim(),
-        modelo: formData.model.trim(),
-        serial: formData.serial,
-        estado: formData.status,
-        notas: formData.description || "",
-        procedencia: {
-          id_region: formData.regionP,
-          id_estado: formData.estadoP,
-          id_ciudad: formData.cityP,
-          id_sede: formData.sedeP,
-          id_piso: formData.pisoP,
-          id_ala: formData.alaP || null,
-        },
-        asignacion: {
-          id_region: formData.region,
-          id_estado: formData.estado,
-          id_ciudad: formData.city,
-          id_sede: formData.sede,
-          id_piso: formData.piso,
-          id_ala: formData.ala || null,
-        },
-      };
+    // 2. Estructura Base para TODOS los equipos (PC, Laptop o Periféricos)
+    const payload = {
+      marca: formData.name.trim(),
+      modelo: formData.model.trim(),
+      serial: formData.serial,
+      estado: formData.status,
+      notas: formData.description || "",
+      procedencia: {
+        region: formData.regionP,
+        estado: formData.estadoP,
+        ciudad: formData.cityP,
+        sede: formData.sedeP,
+        piso: formData.pisoP,
+        ala: formData.alaP || null,
+      },
+      asignacion: {
+        region: formData.region,
+        estado: formData.estado,
+        ciudad: formData.city,
+        sede: formData.sede,
+        piso: formData.piso,
+        ala: formData.ala || null,
+      },
+    };
 
-      let url = "";
+    let url = "";
 
-      // 3. Si es CPU o LAPTOP, agregamos Componentes y Periféricos vinculados
-      if (tipoDispositivo === "CPU" || tipoDispositivo === "LAPTOP") {
-        payload.componentes = [];
-        payload.perifericos = [];
+    // 3. Si es CPU o LAPTOP, agregamos Componentes y Periféricos vinculados
+    if (tipoDispositivo === "CPU" || tipoDispositivo === "LAPTOP") {
+      payload.componentes = [];
+      payload.perifericos = [];
 
-        // Mapear múltiples RAMs (Generamos serial único si está vacío para evitar choques)
-        formData.ramList?.forEach((ram, index) => {
-          if (ram.capacity) {
-            payload.componentes.push({
-              tipo: "memoria_ram",
-              capacidad: ram.capacity,
-              estado: ram.status || formData.status,
-              serial: ram.serial || `RAM-${Date.now()}-${index}`,
-            });
-          }
-        });
-
-        // Mapear múltiples Discos Duros
-        formData.storageList?.forEach((disco, index) => {
-          if (disco.capacity) {
-            payload.componentes.push({
-              tipo: "disco_duro",
-              capacidad: disco.capacity,
-              estado: disco.status || formData.status,
-              serial: disco.serial || `HDD-${Date.now()}-${index}`,
-            });
-          }
-        });
-
-        // Procesador
-        if (formData.processor) {
+      // Mapear múltiples RAMs (Generamos serial único si está vacío para evitar choques)
+      formData.ramList?.forEach((ram, index) => {
+        if (ram.capacity) {
           payload.componentes.push({
-            tipo: "procesador",
-            modelo: formData.processor,
-            estado: formData.processorStatus || formData.status,
-            serial: `CPU-${Date.now()}`,
+            tipo: "memoria_ram",
+            capacidad: ram.capacity,
+            estado: ram.status || formData.status,
+            serial: ram.serial || `RAM-${Date.now()}-${index}`,
           });
         }
+      });
 
-        // Periféricos asociados
-        if (formData.hasMonitor && formData.monitorSerial) {
-          payload.perifericos.push({
-            tipo: "monitor",
-            serial: formData.monitorSerial,
-            modelo: formData.monitorBrand,
-            estado: formData.monitorStatus,
+      // Mapear múltiples Discos Duros
+      formData.storageList?.forEach((disco, index) => {
+        if (disco.capacity) {
+          payload.componentes.push({
+            tipo: "disco_duro",
+            capacidad: disco.capacity,
+            estado: disco.status || formData.status,
+            serial: disco.serial || `HDD-${Date.now()}-${index}`,
           });
         }
-        if (formData.hasKeyboard && formData.keyboardSerial) {
-          payload.perifericos.push({
-            tipo: "teclados",
-            serial: formData.keyboardSerial,
-            modelo: formData.keyboardBrand,
-            estado: formData.keyboardStatus,
-          });
-        }
-        if (formData.hasMouse && formData.mouseSerial) {
-          payload.perifericos.push({
-            tipo: "mouse",
-            serial: formData.mouseSerial,
-            modelo: formData.mouseBrand,
-            estado: formData.mouseStatus,
-          });
-        }
-        if (formData.hasSpeakers && formData.speakersSerial) {
-          payload.perifericos.push({
-            tipo: "mouse",
-            serial: formData.speakersSerial,
-            modelo: formData.speakersBrand,
-            estado: formData.speakersStatus,
-          });
-        }
+      });
 
-        url =
-          tipoDispositivo === "LAPTOP"
-            ? "http://localhost:3001/api/laptop"
-            : "http://localhost:3001/api/pc";
-      } else {
-        const tipoClean = formData.type.toLowerCase();
-        url = `http://localhost:3001/api/perifericos/${tipoClean}`;
+      // Procesador
+      if (formData.processor) {
+        payload.componentes.push({
+          tipo: "procesador",
+          modelo: formData.processor,
+          estado: formData.processorStatus || formData.status,
+          serial: `CPU-${Date.now()}`,
+        });
       }
-      
-      const peticionRegistro = axios.post(url, payload);
 
-      toast.promise(peticionRegistro, {
-        loading: "Registrando equipo...",
-        success: (response) => {
-          setTimeout(() => {
+      // Periféricos asociados
+      if (formData.hasMonitor && formData.monitorSerial) {
+        payload.perifericos.push({
+          tipo: "Monitor",
+          serial: formData.monitorSerial,
+          modelo: formData.monitorBrand,
+          estado: formData.monitorStatus,
+        });
+      }
+      if (formData.hasKeyboard && formData.keyboardSerial) {
+        payload.perifericos.push({
+          tipo: "Teclado",
+          serial: formData.keyboardSerial,
+          modelo: formData.keyboardBrand,
+          estado: formData.keyboardStatus,
+        });
+      }
+      if (formData.hasMouse && formData.mouseSerial) {
+        payload.perifericos.push({
+          tipo: "Mouse",
+          serial: formData.mouseSerial,
+          modelo: formData.mouseBrand,
+          estado: formData.mouseStatus,
+        });
+      }
+      if (formData.hasSpeakers && formData.speakersSerial) {
+        payload.perifericos.push({
+          tipo: "Corneta",
+          serial: formData.speakersSerial,
+          modelo: formData.speakersBrand,
+          estado: formData.speakersStatus,
+        });
+      }
+
+      url =
+        tipoDispositivo === "LAPTOP"
+          ? "http://localhost:3001/api/laptop"
+          : "http://localhost:3001/api/pc";
+    } else {
+      const tipoClean = formData.type;
+      url = `http://localhost:3001/api/perifericos/${tipoClean}`;
+    }
+
+    const peticionRegistro = axios.post(url, payload);
+
+    toast.promise(peticionRegistro, {
+      loading: "Registrando equipo...",
+      success: (response) => {
+        setTimeout(() => {
           navigate("/registro");
-          }, 3000); // Redirige después de 1 segundo para que el usuario vea el mensaje
-          return response.data.message || "Equipo registrado exitosamente.";
-        },
-        error: (err) => {
-          return err.response?.data?.message || "Error al registrar el equipo. Intenta nuevamente.";
-        },
-      }); 
+        }, 3000); // Redirige después de 1 segundo para que el usuario vea el mensaje
+        return response.data.message || "Equipo registrado exitosamente.";
+      },
+      error: (err) => {
+        return (
+          err.response?.data?.message ||
+          "Error al registrar el equipo. Intenta nuevamente."
+        );
+      },
+    });
   };
 
   // Función para autocompletar lol
@@ -246,20 +250,20 @@ export default function Registro() {
         ala: "",
       },
       torre30: {
-        region: 1,
-        estado: 12,
-        city: 212,
-        sede: 3,
-        piso: 2,
+        region: "Centro Occidente",
+        estado: "Lara",
+        city: "Barquisimeto",
+        sede: "Torre 30",
+        piso: "3",
         ala: "",
       },
       torreEste: {
-        region: 1,
-        estado: 12,
-        city: 212,
-        sede: 4,
-        piso: 4,
-        ala: 6,
+        region: "Centro Occidente",
+        estado: "Lara",
+        city: "Barquisimeto",
+        sede: "Torre Este",
+        piso: "3",
+        ala: "",
       },
     };
 

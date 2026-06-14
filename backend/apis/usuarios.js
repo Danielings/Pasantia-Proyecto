@@ -1,308 +1,420 @@
 import express from "express";
-import pool from "../config/bd.js";
 import bcrypt from "bcrypt";
-
+import crypto from "crypto";
+import dotenv from "dotenv";
+import { db } from "../config/firebase.js";
+import { FieldValue } from "firebase-admin/firestore";
+import jwt from "jsonwebtoken";
+import { generarCambios } from "../controller/generarCambios.js";
+import verificarToken from "../middleware/verificarToken.js";
+import esSuperAdmin from "../middleware/esSuperAdmin.js";
+import permitirEscritura from "../middleware/permitirEscritura.js";
 const Router = express.Router();
+dotenv.config();
+const COL_USUARIOS = "usuarios";
+const COL_UBICACIONES = "ubicaciones";
+
+const normalize = (value = "") =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const sha1 = (value) =>
+  crypto.createHash("sha1").update(String(value)).digest("hex");
+
+const locationRequiredFields = ["region", "estado", "ciudad", "sede", "piso"];
+
+function badRequest(message) {
+  const err = new Error(message);
+  err.statusCode = 400;
+  return err;
+}
+
+function requireString(value, fieldName) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw badRequest(`El campo "${fieldName}" es obligatorio.`);
+  }
+  return value.trim();
+}
+
+function normalizeLocationInput(input, label) {
+  if (!input || typeof input !== "object") {
+    throw badRequest(`La ubicación de ${label} es obligatoria.`);
+  }
+
+  const data = {};
+  for (const field of locationRequiredFields) {
+    data[field] = requireString(input[field], `${label}.${field}`);
+  }
+
+  data.ala = input.alas ? String(input.alas).trim() : null; // Nota: en usuarios le llamabas "alas"
+  return data;
+}
+
+function locationIdFromData(data) {
+  const raw = [
+    normalize(data.region),
+    normalize(data.estado),
+    normalize(data.ciudad),
+    normalize(data.sede),
+    normalize(data.piso),
+    normalize(data.ala || ""),
+  ].join("|");
+
+  return `ubi_${sha1(raw)}`;
+}
 
 Router.post("/usuarios", async (req, res) => {
-  const {
-    id_region,
-    id_estado,
-    id_ciudad,
-    id_sede,
-    id_piso,
-    username,
-    password,
-    rol,
-    cedula,
-    nombre,
-    apellido,
-    correo,
-    telefono,
-    estado_persona,
-  } = req.body;
-
-  const connection = await pool.getConnection();
-
   try {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    await connection.beginTransaction();
-
-    const queryUbicacion = `
-      INSERT INTO ubicacion (id_region, id_estado, id_ciudad, id_sede, id_piso) 
-      VALUES (?, ?, ?, ?, ?)`;
-    const [ubi] = await connection.execute(queryUbicacion, [
-      id_region,
-      id_estado,
-      id_ciudad,
-      id_sede,
-      id_piso,
-    ]);
-    //con el isertId recuperamos el id o clave primaria de la tabla ubicación
-    const id_ubicacion = ubi.insertId;
-
-    const queryUsuario = `
-      INSERT INTO usuarios (username, password, rol) 
-      VALUES (?, ?, ?)`;
-    const [usi] = await connection.execute(queryUsuario, [
+    const {
       username,
-      hashedPassword,
+      password,
       rol,
-    ]);
-    const id_usuario = usi.insertId;
-
-    const queryPersona = `
-      INSERT INTO personas (cedula, nombre, apellido, correo, telefono, estado, id_usuario, id_ubicacion) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    await connection.execute(queryPersona, [
       cedula,
       nombre,
       apellido,
       correo,
       telefono,
-      estado_persona || "activo",
-      id_usuario,
-      id_ubicacion,
-    ]);
+      estado_persona,
+      region,
+      estado,
+      ciudad,
+      sede,
+      piso,
+      alas,
+    } = req.body;
 
-    await connection.commit();
-    res.status(201).json({ message: "Lol. Usuario creado." });
-  } catch (e) {
-    await connection.rollback();
-    console.error("Error en el registro:", e);
+    requireString(username, "username");
+    requireString(password, "password");
+    requireString(cedula, "cedula");
+    requireString(correo, "correo");
+
+    const usernameNorm = username.trim().toLowerCase();
+    const cedulaNorm = cedula.trim();
+
+    // Armamos el objeto de ubicación con lo que viene del body
+    const rawUbicacion = { region, estado, ciudad, sede, piso, alas };
+    const normUbicacion = normalizeLocationInput(rawUbicacion, "usuario");
+    const ubiId = locationIdFromData(normUbicacion);
+
+    const userId = await db.runTransaction(async (tx) => {
+      // 1. Validar duplicados
+      const userRef = db.collection(COL_USUARIOS);
+
+      const checkUsername = await tx.get(
+        userRef.where("usernameNorm", "==", usernameNorm).limit(1),
+      );
+      if (!checkUsername.empty) {
+        throw badRequest(`El nombre de usuario "${username}" ya está en uso.`);
+      }
+
+      const checkCedula = await tx.get(
+        userRef.where("cedula", "==", cedulaNorm).limit(1),
+      );
+      if (!checkCedula.empty) {
+        throw badRequest(`La cédula "${cedula}" ya se encuentra registrada.`);
+      }
+
+      // 2. Hash de contraseña
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // 3. Crear o actualizar la UBICACIÓN GLOBAL (La que ves en tu imagen)
+      const ubiRef = db.collection(COL_UBICACIONES).doc(ubiId);
+      const ubiSnap = await tx.get(ubiRef);
+      if (!ubiSnap.exists) {
+        tx.set(ubiRef, {
+          ...normUbicacion,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      // 4. Crear documento del usuario
+      const newDocRef = userRef.doc();
+      const docPayload = {
+        username: username.trim(),
+        usernameNorm,
+        password: hashedPassword,
+        rol: rol?.trim() || "usuario",
+        cedula: cedulaNorm,
+        nombre: nombre?.trim() || "",
+        apellido: apellido?.trim() || "",
+        correo: correo?.trim() || "",
+        telefono: telefono?.trim() || "",
+        estado: estado_persona?.trim() || "activo",
+        id_ubicacion: ubiId, // Guardamos la referencia global
+        ubicacion: normUbicacion, // Desnormalizamos para no hacer JOIN en los GET
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        reset_token: "",
+        token_expires: "",
+      };
+
+      tx.set(newDocRef, docPayload);
+
+      return newDocRef.id;
+    });
+
     res
-      .status(500)
-      .json({ message: "No se pudo crear el usuario jaja", error: e.message });
-  } finally {
-    connection.release();
+      .status(201)
+      .json({ message: "Usuario creado exitosamente.", id_usuario: userId });
+  } catch (e) {
+    console.error("Error en el registro:", e);
+    res.status(e.statusCode || 500).json({
+      message: "No se pudo crear el usuario.",
+      error: e.message,
+    });
   }
 });
 
-Router.get("/usuarios", async (req, res) => {
-  const connection = await pool.getConnection();
-
+Router.get("/usuarios", verificarToken, esSuperAdmin, async (req, res) => {
   try {
-    const query = `
-      SELECT
-      u.id_usuario,
+    const snapshot = await db
+      .collection(COL_USUARIOS)
+      .where("estado", "==", "activo")
+      .get();
 
-      p.cedula,
-      p.nombre,
-      p.apellido,
-      p.correo,
-      p.telefono,
-      p.estado AS estado_persona,
+    const rows = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const ubi = data.ubicacion || {};
 
-      u.username,
-      u.rol,
+      return {
+        id_usuario: doc.id,
+        cedula: data.cedula,
+        nombre: data.nombre,
+        apellido: data.apellido,
+        correo: data.correo,
+        telefono: data.telefono,
+        estado_persona: data.estado,
+        username: data.username,
+        rol: data.rol,
 
-      ub.id_region,
-      ub.id_estado,
-      ub.id_ciudad,
-      ub.id_sede,
-      ub.id_piso,
+        region: ubi.region,
+        estado: ubi.estado,
+        ciudad: ubi.ciudad,
+        sede: ubi.sede,
+        piso: ubi.piso,
+        alas: ubi.ala,
 
-
-      r.region,
-      e.estado,
-      c.ciudad,
-      s.sede,
-      pi.piso,
-      pi.alas
-
-      FROM personas p
-
-      INNER JOIN usuarios u
-      ON p.id_usuario = u.id_usuario
-
-      INNER JOIN ubicacion ub
-      ON p.id_ubicacion = ub.id_ubicacion
-
-      LEFT JOIN region r
-      ON ub.id_region = r.id_region
-
-      LEFT JOIN estados e
-      ON ub.id_estado = e.id_estado
-
-      LEFT JOIN ciudades c
-      ON ub.id_ciudad = c.id_ciudad
-
-      LEFT JOIN sede s
-      ON ub.id_sede = s.id_sede
-
-      LEFT JOIN piso pi
-      ON ub.id_piso = pi.id_piso
-
-      WHERE p.estado = "activo";
-
-    `;
-    const [rows] = await connection.execute(query);
+        id_region: ubi.region,
+        id_estado: ubi.estado,
+        id_ciudad: ubi.ciudad,
+        id_sede: ubi.sede,
+        id_piso: ubi.piso,
+      };
+    });
 
     res.status(200).json(rows);
   } catch (e) {
-    console.error("Error al obtener usuarios:", e);
     res.status(500).json({
-      message: "No se pudieron obtener los usuarios",
+      message: "No se pudieron obtener los usuarios.",
       error: e.message,
     });
-  } finally {
-    connection.release();
   }
 });
 
-Router.put("/usuarios/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const {
-    id_region,
-    id_estado,
-    id_ciudad,
-    id_sede,
-    id_piso,
-    username,
-    rol,
-    cedula,
-    nombre,
-    apellido,
-    correo,
-    telefono,
-    password,
-  } = req.body;
-
-  const connection = await pool.getConnection();
-
+Router.put("/usuarios/:id", verificarToken, async (req, res) => {
   try {
-    await connection.beginTransaction();
+    const { id } = req.params;
+    const newData = req.body;
+    const usuarioQueEdita = req.user.username;
 
-    const [usuarioActual] = await connection.execute(
-      `
-      SELECT 
-        p.id_ubicacion,
-        p.id_usuario
-      FROM personas p
-      WHERE p.id_usuario = ?
-      `,
-      [id],
-    );
+    const {
+      username,
+      rol,
+      cedula,
+      nombre,
+      apellido,
+      correo,
+      telefono,
+      password,
+      region,
+      estado,
+      ciudad,
+      sede,
+      piso,
+      alas,
+    } = req.body;
 
-    if (usuarioActual.length === 0) {
-      return res.status(404).json({
-        message: "Usuario no encontrado",
+    const rawUbicacion = { region, estado, ciudad, sede, piso, alas };
+    const normUbicacion = normalizeLocationInput(rawUbicacion, "usuario");
+    const ubiId = locationIdFromData(normUbicacion);
+
+    await db.runTransaction(async (tx) => {
+      const userRef = db.collection(COL_USUARIOS).doc(id);
+      const userSnap = await tx.get(userRef);
+
+      if (!userSnap.exists) {
+        throw badRequest("Usuario no encontrado.");
+      }
+
+      const oldData = userSnap.data();
+
+      // 1. Actualizar/Crear en colección global de ubicaciones
+      const ubiRef = db.collection(COL_UBICACIONES).doc(ubiId);
+      const ubiSnap = await tx.get(ubiRef);
+      if (!ubiSnap.exists) {
+        tx.set(ubiRef, {
+          ...normUbicacion,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      // 2. Preparar datos de actualización
+      const updateData = {
+        username: username?.trim(),
+        usernameNorm: username?.trim().toLowerCase(),
+        rol: rol?.trim(),
+        cedula: cedula?.trim(),
+        nombre: nombre?.trim(),
+        apellido: apellido?.trim(),
+        correo: correo?.trim(),
+        telefono: telefono?.trim(),
+        estado: "activo",
+        id_ubicacion: ubiId,
+        ubicacion: normUbicacion,
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      if (password && password.trim() !== "") {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      const listaCambios = generarCambios(oldData, {
+        ...updateData,
+        password: password,
       });
-    }
 
-    const { id_ubicacion } = usuarioActual[0];
+      tx.update(userRef, updateData);
 
-    await connection.execute(
-      `
-      UPDATE ubicacion
-      SET
-        id_region = ?,
-        id_estado = ?,
-        id_ciudad = ?,
-        id_sede = ?,
-        id_piso = ?
-      WHERE id_ubicacion = ?
-      `,
-      [id_region, id_estado, id_ciudad, id_sede, id_piso, id_ubicacion],
-    );
-
-    if (password && password.trim() !== "") {
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      await connection.execute(
-        `
-        UPDATE usuarios
-        SET
-          username = ?,
-          rol = ?,
-          password = ?
-        WHERE id_usuario = ?
-        `,
-        [username, rol, hashedPassword, id],
-      );
-    } else {
-      await connection.execute(
-        `
-        UPDATE usuarios
-        SET
-          username = ?,
-          rol = ?
-        WHERE id_usuario = ?
-        `,
-        [username, rol, id],
-      );
-    }
-
-    await connection.execute(
-      `
-      UPDATE personas
-      SET
-        cedula = ?,
-        nombre = ?,
-        apellido = ?,
-        correo = ?,
-        telefono = ?,
-        estado = ?
-      WHERE id_usuario = ?
-      `,
-      [cedula, nombre, apellido, correo, telefono, "activo", id],
-    );
-
-    await connection.commit();
+      if (listaCambios.length > 0) {
+        const bitacoraRef = db.collection("bitacora").doc();
+        tx.set(bitacoraRef, {
+          usuario: usuarioQueEdita,
+          id_modificado: id,
+          accion: "Actualización de usuario",
+          detalles: listaCambios,
+          fecha: FieldValue.serverTimestamp(),
+          sede: oldData.ubicacion?.sede || "N/A",
+        });
+      }
+    });
 
     res.status(200).json({
-      message: "Usuario actualizado correctamente",
+      message: "Usuario actualizado y cambios registrados en bitácora.",
     });
   } catch (e) {
-    await connection.rollback();
-
-    console.error("Error actualizando usuario:", e);
-
-    res.status(500).json({
-      message: "Error actualizando usuario",
-      error: e.message,
-    });
-  } finally {
-    connection.release();
+    res
+      .status(e.statusCode || 500)
+      .json({ message: "Error actualizando usuario.", error: e.message });
   }
 });
 
+/* =========================
+   PUT: ELIMINACIÓN LÓGICA
+========================= */
 Router.put("/usuarios/eliminado/:id", async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const userRef = db.collection(COL_USUARIOS).doc(id);
+    const userSnap = await userRef.get();
 
-  const connection = await pool.getConnection();
+    if (!userSnap.exists)
+      return res.status(404).json({ message: "Usuario no encontrado." });
+
+    await userRef.update({
+      estado: "inactivo",
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ message: "Usuario eliminado (lógicamente)." });
+  } catch (e) {
+    res
+      .status(500)
+      .json({ message: "Error al eliminar usuario.", error: e.message });
+  }
+});
+
+Router.post("/login", async (req, res) => {
+  const { correo, password } = req.body;
 
   try {
-    await connection.beginTransaction();
+    const snapshot = await db
+      .collection("usuarios")
+      .where("correo", "==", correo)
+      .limit(1)
+      .get();
 
-    await connection.execute(
-      `
-      UPDATE personas
-      SET estado = ?
-      WHERE id_usuario = ?
-      `,
-      ["inactivo", id],
+    if (snapshot.empty) {
+      return res.status(401).json({ message: "Credenciales inválidas" });
+    }
+
+    const doc = snapshot.docs[0];
+    const usuario = doc.data();
+    const match =
+      password === usuario.password ||
+      (await bcrypt.compare(password, usuario.password));
+
+    if (!match) {
+      return res.status(401).json({ message: "Credenciales inválidas" });
+    }
+
+    const usuarioData = doc.data();
+    const rol = usuarioData.rol || "Usuario";
+    const sede = usuario.ubicacion?.sede || null;
+
+    const token = jwt.sign(
+      {
+        id: doc.id,
+        rol: rol,
+        sede: sede,
+        username: usuarioData.username,
+        correo: usuarioData.correo,
+      },
+      process.env.JWT_SECRET || "lol",
+      { expiresIn: "1h" },
     );
 
-    await connection.commit();
-
-    res.status(200).json({
-      message: "Usuario eliminado (lógicamente)",
+    res.cookie("acceso_token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 3600000,
     });
-  } catch (e) {
-    await connection.rollback();
 
-    console.error("Error actualizando usuario:", e);
-
-    res.status(500).json({
-      message: "Error actualizando usuario",
-      error: e.message,
+    return res.status(200).json({
+      message: "Login exitoso",
+      token,
+      user: {
+        correo: usuario.correo,
+        username: usuario.username,
+        sede: usuario.sede,
+        rol: usuario.rol,
+      },
     });
-  } finally {
-    connection.release();
+  } catch (error) {
+    return res.status(500).json({ message: "Error en el servidor" });
   }
+});
+
+//para cerrar sesion
+Router.post("/logout", (req, res) => {
+  res.clearCookie("acceso_token");
+  return res.status(200).json({ message: "Sesión cerrada" });
+});
+
+// api para obtener la info de jwt
+Router.get("/me", verificarToken, (req, res) => {
+  return res.status(200).json({
+    autenticado: true,
+    user: {
+      correo: req.user.correo,
+      username: req.user.username,
+      rol: req.user.rol,
+      sede: req.user.sede,
+    },
+  });
 });
 export default Router;

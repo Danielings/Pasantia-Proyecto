@@ -18,6 +18,7 @@ export default function LocationSelector({
           "http://localhost:3001/api/ubicaciones",
         );
         setUbicaciones(response.data);
+        console.log(response.data);
       } catch (error) {
         console.error("Error obteniendo ubicaciones:", error);
       }
@@ -36,16 +37,15 @@ export default function LocationSelector({
 
     const ubicacionEncontrada = ubicaciones.find(
       (u) =>
-        String(u.id_sede) === String(sedeId) &&
-        String(u.id_piso) === String(pisoId),
+        String(u.sede) === String(sedeId) && String(u.piso) === String(pisoId),
     );
 
     if (!ubicacionEncontrada) return;
 
     const tieneAla =
-      ubicacionEncontrada.alas && ubicacionEncontrada.alas !== "NULL";
+      ubicacionEncontrada.ala && ubicacionEncontrada.ala !== "NULL";
 
-    const textoAla = tieneAla ? `, Ala: ${ubicacionEncontrada.alas}` : "";
+    const textoAla = tieneAla ? `, Ala: ${ubicacionEncontrada.ala}` : "";
 
     setBusqueda(
       `${ubicacionEncontrada.sede} (${ubicacionEncontrada.ciudad}, Piso: ${ubicacionEncontrada.piso}${textoAla})`,
@@ -76,18 +76,18 @@ export default function LocationSelector({
     const pfx = typePrefix || "";
 
     // Validamos que el ala exista y no sea un string "NULL" de la base de datos
-    const tieneAla = ubi.alas && ubi.alas !== "NULL" && ubi.alas !== null;
-    const textoAla = tieneAla ? `, Ala: ${ubi.alas}` : "";
+    const tieneAla = ubi.ala && ubi.ala !== "NULL" && ubi.ala !== null;
+    const textoAla = tieneAla ? `, Ala: ${ubi.ala}` : "";
 
     setFormData((prev) => ({
       ...prev,
-      [`region${pfx}`]: ubi.id_region,
-      [`estado${pfx}`]: ubi.id_estado,
-      [`city${pfx}`]: ubi.id_ciudad,
-      [`sede${pfx}`]: ubi.id_sede,
-      [`piso${pfx}`]: ubi.id_piso,
+      [`region${pfx}`]: ubi.region,
+      [`estado${pfx}`]: ubi.estado,
+      [`city${pfx}`]: ubi.ciudad,
+      [`sede${pfx}`]: ubi.sede,
+      [`piso${pfx}`]: ubi.piso,
       // Guardamos el string del ala o vacío si no aplica
-      [`ala${pfx}`]: tieneAla ? ubi.alas : "",
+      [`ala${pfx}`]: tieneAla ? ubi.ala : "",
     }));
 
     // Formateamos el texto que se verá reflejado en el input
@@ -165,8 +165,8 @@ export default function LocationSelector({
               ubicacionesFiltradas.map((ubi, index) => {
                 // Validación exacta de la nueva columna plural 'alas' de tu BD
                 const tieneAla =
-                  ubi.alas && ubi.alas !== "NULL" && ubi.alas !== null;
-                const textoAla = tieneAla ? `, Ala: ${ubi.alas}` : "";
+                  ubi.ala && ubi.ala !== "NULL" && ubi.ala !== null;
+                const textoAla = tieneAla ? `, Ala: ${ubi.ala}` : "";
 
                 return (
                   <li

@@ -50,23 +50,23 @@ export const userSchema = z.object({
   ),
   region: z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
-    z.string().min(1, "La región es requerida"),
+    z.string().min(1, "Región de asignación requerida"),
   ),
   estado: z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
-    z.string().min(1, "El estado es requerido"),
+    z.string().min(1, "Estado de asignación requerido"),
   ),
   city: z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
-    z.string().min(1, "La ciudad es requerida"),
+    z.string().min(1, "Ciudad de asignación requerida"),
   ),
   sede: z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
-    z.string().min(1, "La sucursal es requerida"),
+    z.string().min(1, "Sede de asignación requerida"),
   ),
   piso: z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
-    z.string().min(1, "El piso es requerido"),
+    z.string().min(1, "Piso de asignación requerido"),
   ),
 });
 
