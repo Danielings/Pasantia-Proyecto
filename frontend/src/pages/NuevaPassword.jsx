@@ -43,8 +43,6 @@ export default function NuevaPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // setError("");
-    // setMessage("");
 
     if (password !== confirmPassword) {
       toast.error("Las contraseñas no coinciden.");
@@ -60,21 +58,6 @@ export default function NuevaPassword() {
     setLoading(true);
 
     const peticionRestablecer = axios.post(`${API_URL}/restablecer-password`, { token, password });
-    // try {
-    //   const response = await axios.post(`${API_URL}/restablecer-password`, {
-    //     token,
-    //     password,
-    //   });
-    //   setMessage(response.data.message);
-    //   setTimeout(() => navigate("/login"), 2500);
-    // } catch (err) {
-    //   setError(
-    //     err.response?.data?.message ||
-    //       "No se pudo actualizar la contraseña. Intenta de nuevo.",
-    //   );
-    // } finally {
-    //   setLoading(false);
-    // }
     toast.promise(peticionRestablecer, {
       loading: "Actualizando contraseña...",
       success: (response) => {
@@ -189,13 +172,6 @@ export default function NuevaPassword() {
                     />
                   </div>
                 </div>
-
-                {/* {error && (
-                  <p className="text-sm text-red-600 text-center">{error}</p>
-                )}
-                {message && (
-                  <p className="text-sm text-green-600 text-center">{message}</p>
-                )} */}
 
                 <button
                   type="submit"

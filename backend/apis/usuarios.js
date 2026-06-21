@@ -303,7 +303,7 @@ Router.put("/usuarios/:id", verificarToken, async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Usuario actualizado y cambios registrados en bitácora.",
+      message: "Usuario actualizado exitosamente.",
     });
   } catch (e) {
     res
@@ -408,16 +408,59 @@ Router.post("/logout", (req, res) => {
   return res.status(200).json({ message: "Sesión cerrada" });
 });
 
-// api para obtener la info de jwt
-Router.get("/me", verificarToken, (req, res) => {
-  return res.status(200).json({
-    autenticado: true,
-    user: {
-      correo: req.user.correo,
-      username: req.user.username,
-      rol: req.user.rol,
-      sede: req.user.sede,
-    },
-  });
-});
+// api para obtener la info del usuario autenticado
+async function obtenerPerfilUsuario(req, res) {
+  try {
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(200).json({
+        autenticado: true,
+        user: {
+          correo: req.user.correo,
+          username: req.user.username,
+          rol: req.user.rol,
+          sede: req.user.sede,
+        },
+      });
+    }
+
+    const doc = await db.collection(COL_USUARIOS).doc(userId).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    const data = doc.data();
+    const ubi = data.ubicacion || {};
+
+    return res.status(200).json({
+      autenticado: true,
+      user: {
+        id_usuario: doc.id,
+        cedula: data.cedula || "",
+        nombre: data.nombre || "",
+        apellido: data.apellido || "",
+        correo: data.correo || "",
+        telefono: data.telefono || "",
+        username: data.username || "",
+        rol: data.rol || "",
+        region: ubi.region || "",
+        estado: ubi.estado || "",
+        city: ubi.ciudad || "",
+        sede: ubi.sede || "",
+        piso: ubi.piso || "",
+        ala: ubi.ala || "",
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "No se pudo obtener el perfil del usuario.",
+      error: error.message,
+    });
+  }
+}
+
+Router.get("/me", verificarToken, obtenerPerfilUsuario);
+Router.get("/usuarios/me", verificarToken, obtenerPerfilUsuario);
 export default Router;

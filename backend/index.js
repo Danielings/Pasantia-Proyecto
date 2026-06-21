@@ -8,6 +8,7 @@ import ubicacion from "./apis/ubicacion.js";
 import usuarios from "./apis/usuarios.js";
 import equipos from "./apis/equipos.js";
 import bitacora from "./apis/bitacora.js";
+import exportacion from "./apis/exportacion.js";
 import recuperarPassword from "./apis/recuperarPassword.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -21,6 +22,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Content-Disposition"],
   }),
 );
 app.use(express.json());
@@ -41,6 +43,7 @@ app.use("/api", usuarios);
 app.use("/api", recuperarPassword);
 app.use("/api", equipos);
 app.use("/api", bitacora);
+app.use("/api", exportacion);
 
 const server = app.listen(PORT, () => {
   const smtpUser = env("SMTP_USER");

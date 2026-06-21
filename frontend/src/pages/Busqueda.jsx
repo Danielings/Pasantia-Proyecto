@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "../components/layout/Header";
 import EquipoModal from "./Equipos/EquiposModal";
+import ExportDownloadButton from "../components/ui/ExportDownloadButton";
 import axios from "axios";
 import {
   FiSearch,
@@ -149,20 +150,35 @@ export default function Busqueda() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
+  const dedupeByKey = (items, getKey) => {
+    const map = new Map();
+    items.forEach((item) => {
+      const key = getKey(item);
+      if (key && !map.has(key)) map.set(key, item);
+    });
+    return [...map.values()];
+  };
+
   const options = {
     statuses: ["Bueno", "Defectuoso"],
-    types: [
-      "PC",
-      "Laptop",
-      "Cornetas",
-      "Mouse",
-      "Switches",
-      "Teclados",
-      "Impresoras",
-      "Monitor",
-    ],
-    models: ["Vit", "Lenovo"],
-    locations: ["Torre 30", "Torre CANTV"],
+    types: dedupeByKey(
+      equipos.map((item) => item.tipo).filter(Boolean),
+      (tipo) => tipo.trim().toLowerCase(),
+    ).sort((a, b) => a.localeCompare(b, "es")),
+    models: [...new Set(equipos.map((item) => item.modelo).filter(Boolean))].sort(
+      (a, b) => a.localeCompare(b, "es"),
+    ),
+    locations: [...new Set(equipos.map((item) => item.sede).filter(Boolean))].sort(
+      (a, b) => a.localeCompare(b, "es"),
+    ),
+  };
+
+  const exportFilters = {
+    searchTerm,
+    selectedStatuses,
+    selectedTypes,
+    selectedModels,
+    selectedLocations,
   };
 
   return (
@@ -180,11 +196,14 @@ export default function Busqueda() {
             </p>
           </div>
 
-          <div className="self-start md:self-auto px-4 py-2 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-xs font-semibold tracking-wide shadow-sm">
-            {filteredData.length}{" "}
-            {filteredData.length === 1
-              ? "equipo encontrado"
-              : "equipos encontrados"}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-start md:self-auto">
+            <ExportDownloadButton filters={exportFilters} />
+            <div className="px-4 py-2 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-xs font-semibold tracking-wide shadow-sm">
+              {filteredData.length}{" "}
+              {filteredData.length === 1
+                ? "equipo encontrado"
+                : "equipos encontrados"}
+            </div>
           </div>
         </div>
 
