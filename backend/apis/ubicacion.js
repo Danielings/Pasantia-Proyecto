@@ -4,6 +4,7 @@ import { db } from "../config/firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
 import verificarToken from "../middleware/verificarToken.js";
 import permitirEscritura from "../middleware/permitirEscritura.js";
+import { generarCambiosUbicacion } from "../controller/generarCambios.js";
 import {
   normalizeLocationInput,
   locationIdFromData,
@@ -107,6 +108,7 @@ Router.post(
   permitirEscritura,
   async (req, res) => {
     try {
+      const usuarioActivo = req.user;
       const { region, estado, ciudad, sede, piso, ala } = req.body;
 
       const normUbicacion = normalizeLocationInput(
@@ -135,6 +137,20 @@ Router.post(
         ...normUbicacion,
         createdAt: FieldValue.serverTimestamp(),
         status: "Activo",
+      });
+
+      const listaCambios = [
+        `Se registró la sede ${normUbicacion.sede} con el piso ${normUbicacion.piso}`,
+      ];
+
+      const bitacoraRef = db.collection("bitacora").doc();
+      await bitacoraRef.set({
+        usuario: usuarioActivo.username,
+        id_modificado: ubiId,
+        accion: "Ubicación registrada",
+        detalles: listaCambios,
+        fecha: FieldValue.serverTimestamp(),
+        sede: sede,
       });
 
       res.status(201).json({
@@ -191,6 +207,7 @@ Router.put(
   permitirEscritura,
   async (req, res) => {
     try {
+      const usuarioActivo = req.user;
       const { id } = req.params;
       const { region, estado, ciudad, sede, piso, ala } = req.body;
 
@@ -201,6 +218,8 @@ Router.put(
         return res.status(404).json({ message: "Ubicación no encontrada." });
       }
 
+      const oldData = oldSnap.data();
+
       const normUbicacion = normalizeLocationInput(
         { region, estado, ciudad, sede, piso, ala: ala || null },
         "ubicación",
@@ -208,10 +227,26 @@ Router.put(
 
       const newId = locationIdFromData(normUbicacion);
 
+      const listaCambios = generarCambiosUbicacion(oldData, normUbicacion);
+
       if (id === newId) {
-        await oldRef.update({
-          ...normUbicacion,
-          updatedAt: FieldValue.serverTimestamp(),
+        await db.runTransaction(async (tx) => {
+          tx.update(oldRef, {
+            ...normUbicacion,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          if (listaCambios.length > 0) {
+            const bitacoraRef = db.collection("bitacora").doc();
+            tx.set(bitacoraRef, {
+              usuario: usuarioActivo.username || "Usuario Anónimo",
+              id_modificado: id,
+              accion: "Actualización de ubicación",
+              detalles: listaCambios,
+              fecha: FieldValue.serverTimestamp(),
+              sede: normUbicacion.sede || oldData.sede,
+            });
+          }
         });
 
         return res.status(200).json({
@@ -230,8 +265,6 @@ Router.put(
         });
       }
 
-      const oldData = oldSnap.data();
-
       await db.runTransaction(async (tx) => {
         tx.delete(oldRef);
         tx.set(newRef, {
@@ -240,48 +273,38 @@ Router.put(
           updatedAt: FieldValue.serverTimestamp(),
           status: "Activo",
         });
+
+        if (listaCambios.length > 0) {
+          const bitacoraRef = db.collection("bitacora").doc();
+          tx.set(bitacoraRef, {
+            usuario: usuarioActivo.username,
+            id_modificado: newId,
+            accion: "Actualización de ubicación",
+            detalles: listaCambios,
+            fecha: FieldValue.serverTimestamp(),
+            sede: normUbicacion.sede,
+          });
+        }
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Ubicación actualizada con éxito",
         id: newId,
         ...normUbicacion,
       });
     } catch (e) {
+      console.error("Error actualizando la ubicación:", e);
       const status = e.statusCode || 500;
-      res.status(status).json({
+      return res.status(status).json({
         message: e.message || "Error al actualizar la ubicación",
       });
     }
   },
 );
 
-Router.delete(
-  "/ubicaciones/:id",
-  verificarToken,
-  permitirEscritura,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const ubiRef = db.collection(COL_UBICACIONES).doc(id);
-      const ubiSnap = await ubiRef.get();
-
-      if (!ubiSnap.exists) {
-        return res.status(404).json({ message: "Ubicación no encontrada." });
-      }
-
-      await ubiRef.delete();
-
-      res.status(200).json({ message: "Ubicación eliminada con éxito" });
-    } catch (e) {
-      console.error("Error al eliminar ubicación:", e.message);
-      res.status(500).json({ message: "Error al eliminar la ubicación" });
-    }
-  },
-);
-
 Router.put("/ubicaciones/eliminadas/:id", verificarToken, async (req, res) => {
   try {
+    const usuarioActivo = req.user;
     const { id } = req.params;
     const user = req.user.username;
     const sede = req.user.sede;
@@ -294,7 +317,6 @@ Router.put("/ubicaciones/eliminadas/:id", verificarToken, async (req, res) => {
 
     // con esto obtendremos los datos del usuario
     const datos = userSnap.data();
-    const nombre = datos.username || datos.nombre || "Desconocido";
 
     await userRef.update({
       status: "inactivo",
@@ -302,11 +324,13 @@ Router.put("/ubicaciones/eliminadas/:id", verificarToken, async (req, res) => {
     });
 
     const listaCambios = [];
-    listaCambios.push(`Se inactivó la ubicación: ${nombre}`);
+    listaCambios.push(
+      `Se inactivó la ubicación: ${userSnap.sede} con el piso ${userSnap.piso}`,
+    );
 
     const bitacoraRef = db.collection("bitacora").doc();
     await bitacoraRef.set({
-      usuario: user,
+      usuario: usuarioActivo.username || "Usuario Anónimo",
       id_modificado: id,
       accion: "Eliminar ubicación",
       detalles: listaCambios,

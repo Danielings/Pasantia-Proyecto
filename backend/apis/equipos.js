@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { db } from "../config/firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
 import verificarToken from "../middleware/verificarToken.js";
+import permitirEscritura from "../middleware/permitirEscritura.js";
+import { generarCambiosEquipo } from "../controller/generarCambios.js";
 import {
   normalize,
   badRequest,
@@ -66,6 +68,9 @@ function buildEquipoDoc(
 
 async function registrarEquipo(tipoRaw, req, res) {
   try {
+    // Capturamos el usuario autenticado (inyectado por verificarToken)
+    const usuarioActivo = req.user;
+
     const tipoNorm = normalize(tipoRaw);
     const tipoEquipo = EQUIPOS_MAP[tipoNorm];
 
@@ -102,14 +107,12 @@ async function registrarEquipo(tipoRaw, req, res) {
       }
 
       const normalizedPerifericos = [];
-      // Arreglo para guardar las referencias de los periféricos leídos en la base de datos
       const perifericosExistentes = [];
 
       for (let i = 0; i < body.perifericos.length; i++) {
         const peri = normalizePeriferico(body.perifericos[i], i);
         const periSerialNorm = normalize(peri.serial);
 
-        // Verificamos si el periférico ya existe en la colección independiente
         const periQuery = await tx.get(
           db
             .collection("perifericos")
@@ -129,12 +132,53 @@ async function registrarEquipo(tipoRaw, req, res) {
             data: periDoc.data(),
           });
         } else {
-          perifericosExistentes.push(null); // Null indica que hay que crearlo
+          perifericosExistentes.push(null);
         }
 
         await validateUniqueSerial(tx, peri.serial, "periferico");
         normalizedPerifericos.push(peri);
       }
+
+      // --- [NUEVO] CONSTRUCCIÓN DE DETALLES PARA LA BITÁCORA ---
+      // Filtramos dinámicamente los componentes según su tipo (asumiendo que comp.tipo contiene 'ram', 'procesador' o 'disco')
+      const rams = normalizedComponentes.filter((c) =>
+        c.tipo?.toLowerCase().includes("ram"),
+      );
+      const cpus = normalizedComponentes.filter(
+        (c) =>
+          c.tipo?.toLowerCase().includes("procesador") ||
+          c.tipo?.toLowerCase() === "cpu",
+      );
+      const discos = normalizedComponentes.filter(
+        (c) =>
+          c.tipo?.toLowerCase().includes("disco") ||
+          c.tipo?.toLowerCase().includes("almacenamiento"),
+      );
+
+      // Armamos los segmentos de texto extrayendo la capacidad o modelo
+      const txtRam =
+        rams.length > 0
+          ? rams.map((r) => r.capacidad || "RAM").join(" + ")
+          : "sin especificar RAM";
+      const txtCpu =
+        cpus.length > 0
+          ? cpus.map((c) => c.modelo || "Procesador").join(" / ")
+          : "sin especificar procesador";
+      const txtDisco =
+        discos.length > 0
+          ? discos.map((d) => d.capacidad || "Disco Duro").join(" + ")
+          : "sin especificar almacenamiento";
+
+      // Armamos la sección de periféricos
+      let txtPerifericos = "sin periféricos adicionales";
+      if (normalizedPerifericos.length > 0) {
+        txtPerifericos = normalizedPerifericos
+          .map((p) => `${p.tipo} (${p.marca || ""} - S/N: ${p.serial})`)
+          .join(", ");
+      }
+
+      // Mensaje final estructurado tal como lo pediste
+      const mensajeBitacora = `Se registró ${tipoEquipo} (Serial: ${body.serial}) con ${txtRam} RAM, procesador ${txtCpu}, ${txtDisco} de disco duro, y periféricos: ${txtPerifericos}.`;
 
       // --- FASE 2: ESCRITURAS (tx.set / tx.update) ---
       if (!snapProc.exists) {
@@ -171,10 +215,8 @@ async function registrarEquipo(tipoRaw, req, res) {
       for (let i = 0; i < normalizedPerifericos.length; i++) {
         const peri = normalizedPerifericos[i];
         const existente = perifericosExistentes[i];
-
         const idxId = serialIndexId("periferico", peri.serial);
 
-        // 1. Guardar en índices
         tx.set(db.collection(COL.indices).doc(idxId), {
           prefix: "periferico",
           serial: peri.serial,
@@ -186,9 +228,7 @@ async function registrarEquipo(tipoRaw, req, res) {
           createdAt: FieldValue.serverTimestamp(),
         });
 
-        // 2. Sincronizar con la colección "perifericos"
         if (existente) {
-          // Si el periférico ya estaba registrado suelto, lo actualizamos
           tx.update(existente.ref, {
             asignado: true,
             equipoId: equipoRef.id,
@@ -196,7 +236,6 @@ async function registrarEquipo(tipoRaw, req, res) {
             fechaActualizacion: FieldValue.serverTimestamp(),
           });
         } else {
-          // Si no existía, lo creamos e heredamos la ubicación del equipo
           const newPeriRef = db.collection("perifericos").doc();
           tx.set(newPeriRef, {
             tipo: peri.tipo,
@@ -205,7 +244,7 @@ async function registrarEquipo(tipoRaw, req, res) {
             serial: peri.serial,
             serialNorm: normalize(peri.serial),
             estado: peri.estado,
-            notas: peri.notas,
+            notes: peri.notas || "",
             procedencia: procData,
             asignacion: asigData,
             asignado: true,
@@ -241,6 +280,17 @@ async function registrarEquipo(tipoRaw, req, res) {
         ),
       );
 
+      // --- [NUEVO] ESCRITURA EN LA COLECCIÓN BITÁCORA ---
+      const bitacoraRef = db.collection("bitacora").doc();
+      tx.set(bitacoraRef, {
+        usuario: usuarioActivo?.username || "Usuario Anónimo",
+        id_modificado: equipoRef.id,
+        accion: `Registro de ${tipoEquipo}`,
+        detalles: [mensajeBitacora],
+        fecha: FieldValue.serverTimestamp(),
+        sede: asigData.sede || "N/A",
+      });
+
       return equipoRef.id;
     });
 
@@ -249,14 +299,20 @@ async function registrarEquipo(tipoRaw, req, res) {
       id: resultId,
     });
   } catch (error) {
+    console.error("Error registrando equipo:", error);
     return res
       .status(error.statusCode || 500)
       .json({ message: error.message || "Error interno" });
   }
 }
 
-Router.post("/pc", async (req, res) => registrarEquipo("pc", req, res));
-Router.post("/laptop", async (req, res) => registrarEquipo("laptop", req, res));
+// Integramos el middleware verificarToken para rescatar req.user con seguridad
+Router.post("/pc", verificarToken, async (req, res) =>
+  registrarEquipo("pc", req, res),
+);
+Router.post("/laptop", verificarToken, async (req, res) =>
+  registrarEquipo("laptop", req, res),
+);
 
 Router.get("/equipos", verificarToken, async (req, res) => {
   try {
@@ -398,250 +454,291 @@ const buildEquipoRelacionado = (id, equipoData) => ({
   modelo: equipoData.modelo,
   serial: equipoData.serial,
 });
-Router.put("/equipos/:id", async (req, res) => {
-  try {
-    const equipoId = req.params.id;
-    const body = req.body;
+Router.put(
+  "/equipos/:id",
+  verificarToken,
+  permitirEscritura,
+  async (req, res) => {
+    try {
+      const usuarioActivo = req.user; // Captura segura del usuario en sesión
+      const equipoId = req.params.id;
+      const body = req.body;
 
-    // 1. Validaciones tempranas (Ahora con normalización interna)
-    const validComponentes = validateInventoryArrays(
-      body.componentes,
-      "componentes",
-    );
-    const validPerifericos = validateInventoryArrays(
-      body.perifericos,
-      "perifericos",
-    );
-
-    const result = await db.runTransaction(async (tx) => {
-      // --- FASE 1: LECTURAS ---
-      const equipoRef = db.collection(COL.equipos).doc(equipoId);
-      const equipoSnap = await tx.get(equipoRef);
-      if (!equipoSnap.exists) throw badRequest("Equipo no encontrado.");
-      const current = equipoSnap.data();
-
-      // Definición de variables
-      const newSerialNorm = normalize(body.serial || current.serial);
-
-      // Lógica de ubicación
-      const hasNewLocation =
-        body.ubicacion || body.region || body.estado_ubicacion;
-      let asigData = current.asignacion;
-      if (hasNewLocation) {
-        const rawAsignacion = {
-          region: body.region || body.ubicacion?.region,
-          estado: body.estado_ubicacion || body.ubicacion?.estado,
-          ciudad: body.ciudad || body.ubicacion?.ciudad,
-          sede: body.sede || body.ubicacion?.sede,
-          piso: body.piso || body.ubicacion?.piso,
-          alas:
-            body.alas ||
-            body.ala ||
-            body.ubicacion?.alas ||
-            body.ubicacion?.ala,
-        };
-        asigData = normalizeLocationInput(rawAsignacion, "asignacion");
-      }
-
-      // --- Procesamiento de Periféricos ---
-      const oldPerifericos = current.perifericos || [];
-      const getNormSerial = (p) => (p.serial ? normalize(p.serial) : null);
-      const oldPerifSerials = oldPerifericos.map(getNormSerial).filter(Boolean);
-      const newPerifSerials = validPerifericos
-        .map(getNormSerial)
-        .filter(Boolean);
-
-      const addedSerials = newPerifSerials.filter(
-        (s) => !oldPerifSerials.includes(s),
+      // 1. Validaciones tempranas
+      const validComponentes = validateInventoryArrays(
+        body.componentes,
+        "componentes",
       );
-      const removedSerials = oldPerifSerials.filter(
-        (s) => !newPerifSerials.includes(s),
-      );
-      const keptSerials = oldPerifSerials.filter((s) =>
-        newPerifSerials.includes(s),
+      const validPerifericos = validateInventoryArrays(
+        body.perifericos,
+        "perifericos",
       );
 
-      const perifericosActionMap = { remove: [], add: [], keep: [] };
+      const result = await db.runTransaction(async (tx) => {
+        // --- FASE 1: LECTURAS ---
+        const equipoRef = db.collection(COL.equipos).doc(equipoId);
+        const equipoSnap = await tx.get(equipoRef);
+        if (!equipoSnap.exists) throw badRequest("Equipo no encontrado.");
+        const current = equipoSnap.data();
 
-      // Identificar acciones (Remove/Add/Keep)
-      for (const sNorm of removedSerials) {
-        const oldP = oldPerifericos.find((p) => getNormSerial(p) === sNorm);
-        if (oldP?.id)
-          perifericosActionMap.remove.push({
-            id: oldP.id,
-            serial: oldP.serial,
-          });
-      }
+        const newSerialNorm = normalize(body.serial || current.serial);
 
-      for (const sNorm of addedSerials) {
-        const rawInput = validPerifericos.find(
-          (p) => getNormSerial(p) === sNorm,
+        // Lógica de ubicación
+        const hasNewLocation =
+          body.ubicacion || body.region || body.estado_ubicacion;
+        let asigData = current.asignacion;
+        if (hasNewLocation) {
+          const rawAsignacion = {
+            region: body.region || body.ubicacion?.region,
+            estado: body.estado_ubicacion || body.ubicacion?.estado,
+            ciudad: body.ciudad || body.ubicacion?.ciudad,
+            sede: body.sede || body.ubicacion?.sede,
+            piso: body.piso || body.ubicacion?.piso,
+            alas:
+              body.alas ||
+              body.ala ||
+              body.ubicacion?.alas ||
+              body.ubicacion?.ala,
+          };
+          asigData = normalizeLocationInput(rawAsignacion, "asignacion");
+        }
+
+        // --- Procesamiento de Periféricos ---
+        const oldPerifericos = current.perifericos || [];
+        const getNormSerial = (p) => (p.serial ? normalize(p.serial) : null);
+        const oldPerifSerials = oldPerifericos
+          .map(getNormSerial)
+          .filter(Boolean);
+        const newPerifSerials = validPerifericos
+          .map(getNormSerial)
+          .filter(Boolean);
+
+        const addedSerials = newPerifSerials.filter(
+          (s) => !oldPerifSerials.includes(s),
         );
-        const inputData = normalizePeriferico(
-          rawInput,
-          validPerifericos.indexOf(rawInput),
+        const removedSerials = oldPerifSerials.filter(
+          (s) => !newPerifSerials.includes(s),
         );
-        const periQuery = await tx.get(
-          db
-            .collection("perifericos")
-            .where("serialNorm", "==", sNorm)
-            .limit(1),
+        const keptSerials = oldPerifSerials.filter((s) =>
+          newPerifSerials.includes(s),
         );
 
-        if (!periQuery.empty) {
-          const doc = periQuery.docs[0];
-          const data = doc.data();
-          if (data.asignado && data.equipoId !== equipoId) {
-            throw badRequest(
-              `El periférico "${inputData.serial}" ya está asignado a otro equipo.`,
+        const perifericosActionMap = { remove: [], add: [], keep: [] };
+
+        for (const sNorm of removedSerials) {
+          const oldP = oldPerifericos.find((p) => getNormSerial(p) === sNorm);
+          if (oldP?.id) {
+            perifericosActionMap.remove.push({
+              id: oldP.id,
+              serial: oldP.serial,
+              tipo: oldP.tipo,
+            });
+          }
+        }
+
+        for (const sNorm of addedSerials) {
+          const rawInput = validPerifericos.find(
+            (p) => getNormSerial(p) === sNorm,
+          );
+          const inputData = normalizePeriferico(
+            rawInput,
+            validPerifericos.indexOf(rawInput),
+          );
+          const periQuery = await tx.get(
+            db
+              .collection("perifericos")
+              .where("serialNorm", "==", sNorm)
+              .limit(1),
+          );
+
+          if (!periQuery.empty) {
+            const doc = periQuery.docs[0];
+            const data = doc.data();
+            if (data.asignado && data.equipoId !== equipoId) {
+              throw badRequest(
+                `El periférico "${inputData.serial}" ya está asignado a otro equipo.`,
+              );
+            }
+            perifericosActionMap.add.push({
+              isNew: false,
+              id: doc.id,
+              data: data,
+              inputData,
+            });
+          } else {
+            perifericosActionMap.add.push({
+              isNew: true,
+              id: db.collection("perifericos").doc().id,
+              inputData,
+            });
+          }
+        }
+
+        for (const sNorm of keptSerials) {
+          const oldP = oldPerifericos.find((p) => getNormSerial(p) === sNorm);
+          if (oldP?.id)
+            perifericosActionMap.keep.push({ id: oldP.id, data: oldP });
+        }
+
+        // --- FASE 2: ESCRITURAS ---
+        const equipoRelacionadoSync = buildEquipoRelacionado(equipoId, {
+          tipo: body.tipo || current.tipo,
+          marca: body.marca || current.marca,
+          modelo: body.modelo || current.modelo,
+          serial: body.serial || current.serial,
+        });
+        const finalPerifericosArray = [];
+
+        // Ejecutar Remociones de Periféricos
+        for (const item of perifericosActionMap.remove) {
+          const ref = db.collection("perifericos").doc(item.id);
+          const snap = await tx.get(ref);
+          if (snap.exists) {
+            tx.update(ref, {
+              asignado: false,
+              equipoId: null,
+              equipoSerial: null,
+              equipoRelacionado: null,
+            });
+            tx.update(
+              db
+                .collection(COL.indices)
+                .doc(serialIndexId("periferico", item.serial)),
+              { equipoId: null, equipoSerial: null, tipoEquipo: null },
             );
           }
-          perifericosActionMap.add.push({
-            isNew: false,
-            id: doc.id,
-            data: data,
-            inputData,
-          });
-        } else {
-          perifericosActionMap.add.push({
-            isNew: true,
-            id: db.collection("perifericos").doc().id,
-            inputData,
-          });
         }
-      }
 
-      for (const sNorm of keptSerials) {
-        const oldP = oldPerifericos.find((p) => getNormSerial(p) === sNorm);
-        if (oldP?.id)
-          perifericosActionMap.keep.push({ id: oldP.id, data: oldP });
-      }
-
-      // --- FASE 2: ESCRITURAS ---
-      const equipoRelacionadoSync = buildEquipoRelacionado(equipoId, {
-        tipo: body.tipo || current.tipo,
-        marca: body.marca || current.marca,
-        modelo: body.modelo || current.modelo,
-        serial: body.serial || current.serial,
-      });
-      const finalPerifericosArray = [];
-
-      // Ejecutar Periféricos
-      for (const item of perifericosActionMap.remove) {
-        const ref = db.collection("perifericos").doc(item.id);
-        const snap = await tx.get(ref);
-        if (snap.exists) {
-          tx.update(ref, {
-            asignado: false,
-            equipoId: null,
-            equipoSerial: null,
-            equipoRelacionado: null,
-          });
-          tx.update(
+        // Ejecutar Adiciones de Periféricos
+        for (const item of perifericosActionMap.add) {
+          const ref = db.collection("perifericos").doc(item.id);
+          const syncRel = {
+            asignado: true,
+            equipoId: equipoId,
+            equipoSerial: equipoRelacionadoSync.serial,
+            equipoRelacionado: equipoRelacionadoSync,
+          };
+          if (item.isNew) {
+            tx.set(ref, {
+              ...item.inputData,
+              serialNorm: normalize(item.inputData.serial),
+              asignacion: asigData,
+              ...syncRel,
+            });
+          } else {
+            const snap = await tx.get(ref);
+            if (snap.exists) tx.update(ref, syncRel);
+          }
+          tx.set(
             db
               .collection(COL.indices)
-              .doc(serialIndexId("periferico", item.serial)),
-            { equipoId: null, equipoSerial: null, tipoEquipo: null },
+              .doc(serialIndexId("periferico", item.inputData.serial)),
+            {
+              prefix: "periferico",
+              serial: item.inputData.serial,
+              ...syncRel,
+              tipoEquipo: equipoRelacionadoSync.tipo,
+            },
+            { merge: true },
           );
-        }
-      }
-
-      for (const item of perifericosActionMap.add) {
-        const ref = db.collection("perifericos").doc(item.id);
-        const syncRel = {
-          asignado: true,
-          equipoId: equipoId,
-          equipoSerial: equipoRelacionadoSync.serial,
-          equipoRelacionado: equipoRelacionadoSync,
-        };
-        if (item.isNew) {
-          tx.set(ref, {
-            ...item.inputData,
-            serialNorm: normalize(item.inputData.serial),
-            asignacion: asigData,
-            ...syncRel,
-          });
-        } else {
-          const snap = await tx.get(ref);
-          if (snap.exists) tx.update(ref, syncRel);
-        }
-        tx.set(
-          db
-            .collection(COL.indices)
-            .doc(serialIndexId("periferico", item.inputData.serial)),
-          {
-            prefix: "periferico",
-            serial: item.inputData.serial,
-            ...syncRel,
-            tipoEquipo: equipoRelacionadoSync.tipo,
-          },
-          { merge: true },
-        );
-        finalPerifericosArray.push({
-          id: item.id,
-          ...(item.isNew ? item.inputData : item.data),
-          ...syncRel,
-        });
-      }
-
-      for (const item of perifericosActionMap.keep) {
-        const ref = db.collection("perifericos").doc(item.id);
-        const snap = await tx.get(ref);
-        if (snap.exists) {
-          tx.update(ref, {
-            equipoSerial: equipoRelacionadoSync.serial,
-            equipoRelacionado: equipoRelacionadoSync,
-          });
           finalPerifericosArray.push({
             id: item.id,
-            ...item.data,
-            equipoId,
-            equipoSerial: equipoRelacionadoSync.serial,
-            equipoRelacionado: equipoRelacionadoSync,
+            ...(item.isNew ? item.inputData : item.data),
+            ...syncRel,
           });
         }
-      }
 
-      // --- MÁGICA: FUSIÓN DE COMPONENTES ---
-      const currentComponentes = current.componentes || [];
-      const componentsMap = new Map();
-      currentComponentes.forEach((c) => componentsMap.set(c.serial, c));
+        // Mantener Periféricos existentes
+        for (const item of perifericosActionMap.keep) {
+          const ref = db.collection("perifericos").doc(item.id);
+          const snap = await tx.get(ref);
+          if (snap.exists) {
+            tx.update(ref, {
+              equipoSerial: equipoRelacionadoSync.serial,
+              equipoRelacionado: equipoRelacionadoSync,
+            });
+            finalPerifericosArray.push({
+              id: item.id,
+              ...item.data,
+              equipoId,
+              equipoSerial: equipoRelacionadoSync.serial,
+              equipoRelacionado: equipoRelacionadoSync,
+            });
+          }
+        }
 
-      const finalComponentes = validComponentes.map((nuevoComp) => {
-        const antiguo = componentsMap.get(nuevoComp.serial);
-        // Si el componente existe, mezclamos datos viejos + nuevos.
-        // Como 'nuevoComp.tipo' ya fue normalizado en validComponentes, esto mantendrá el formato correcto.
-        if (antiguo) return { ...antiguo, ...nuevoComp };
-        return nuevoComp;
+        // --- FUSIÓN DE COMPONENTES ---
+        const currentComponentes = current.componentes || [];
+        const componentsMap = new Map();
+        currentComponentes.forEach((c) => componentsMap.set(c.serial, c));
+
+        const finalComponentes = validComponentes.map((nuevoComp) => {
+          const antiguo = componentsMap.get(nuevoComp.serial);
+          if (antiguo) return { ...antiguo, ...nuevoComp };
+          return nuevoComp;
+        });
+
+        // --- [NUEVO] CALCULAR LISTA DE CAMBIOS PARA LA BITÁCORA ---
+        const nombresPerifAnadidos = perifericosActionMap.add.map(
+          (p) => `${p.inputData.tipo} (S/N: ${p.inputData.serial})`,
+        );
+        const nombresPerifRemovidos = perifericosActionMap.remove.map(
+          (p) => `${p.tipo} (S/N: ${p.serial})`,
+        );
+
+        const listaCambios = generarCambiosEquipo(current, {
+          tipo: equipoRelacionadoSync.tipo,
+          marca: equipoRelacionadoSync.marca,
+          modelo: equipoRelacionadoSync.modelo,
+          serial: equipoRelacionadoSync.serial,
+          estado: body.estado,
+          asignacion: asigData,
+          componentes: finalComponentes,
+          perifericosAnadidos: nombresPerifAnadidos,
+          perifericosRemovidos: nombresPerifRemovidos,
+        });
+
+        // 4. Actualizar Equipo Principal
+        tx.update(equipoRef, {
+          tipo: equipoRelacionadoSync.tipo,
+          marca: equipoRelacionadoSync.marca,
+          modelo: equipoRelacionadoSync.modelo,
+          serial: equipoRelacionadoSync.serial,
+          serialNorm: newSerialNorm,
+          estado: body.estado || current.estado,
+          asignacion: asigData,
+          componentes: finalComponentes,
+          perifericos: finalPerifericosArray,
+          fechaActualizacion: FieldValue.serverTimestamp(),
+        });
+
+        // --- [NUEVO] GUARDAR EN BITÁCORA SOLO SI SE DETECTARON CAMBIOS ---
+        if (listaCambios.length > 0) {
+          const bitacoraRef = db.collection("bitacora").doc();
+          tx.set(bitacoraRef, {
+            usuario: usuarioActivo?.username || "Usuario Anónimo",
+            id_modificado: equipoId,
+            accion: `Actualización de ${equipoRelacionadoSync.tipo}`,
+            detalles: listaCambios,
+            fecha: FieldValue.serverTimestamp(),
+            sede: asigData?.sede || current.asignacion?.sede || "N/A",
+          });
+        }
+
+        return equipoId;
       });
 
-      // 4. Actualizar Equipo Principal
-      tx.update(equipoRef, {
-        tipo: equipoRelacionadoSync.tipo,
-        marca: equipoRelacionadoSync.marca,
-        modelo: equipoRelacionadoSync.modelo,
-        serial: equipoRelacionadoSync.serial,
-        serialNorm: newSerialNorm,
-        estado: body.estado || current.estado,
-        asignacion: asigData,
-        componentes: finalComponentes,
-        perifericos: finalPerifericosArray,
-        fechaActualizacion: FieldValue.serverTimestamp(),
-      });
-
-      return equipoId;
-    });
-
-    res
-      .status(200)
-      .json({ message: "Equipo actualizado correctamente.", id: result });
-  } catch (error) {
-    console.error("Error en PUT /equipos/:id:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ message: error.message || "Error interno." });
-  }
-});
+      return res
+        .status(200)
+        .json({ message: "Equipo actualizado correctamente.", id: result });
+    } catch (error) {
+      console.error("Error en PUT /equipos/:id:", error);
+      return res
+        .status(error.statusCode || 500)
+        .json({ message: error.message || "Error interno." });
+    }
+  },
+);
 
 Router.get("/verificar-periferico/:dispositivo/:serial", async (req, res) => {
   const { dispositivo, serial } = req.params;

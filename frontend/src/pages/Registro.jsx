@@ -45,7 +45,9 @@ export default function Registro() {
       url = `http://localhost:3001/api/perifericos/${formData.type}`;
     }
 
-    const peticionRegistro = axios.post(url, payload);
+    const peticionRegistro = axios.post(url, payload, {
+      withCredentials: true,
+    });
 
     toast
       .promise(peticionRegistro, {

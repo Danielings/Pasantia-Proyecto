@@ -27,7 +27,7 @@ export const buildPayload = (formData) => {
   };
 
   // Si es CPU o LAPTOP, agregamos Componentes y Periféricos vinculados
-  if (tipoDispositivo === "CPU" || tipoDispositivo === "LAPTOP") {
+  if (tipoDispositivo === "PC" || tipoDispositivo === "LAPTOP") {
     payload.componentes = [];
     payload.perifericos = [];
 

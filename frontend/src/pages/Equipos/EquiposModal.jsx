@@ -42,7 +42,7 @@ export default function EquiposModal({
   const normalizarTipoParaFormulario = (tipoCrudo) => {
     if (!tipoCrudo) return "";
     const lower = tipoCrudo.toLowerCase().trim();
-    if (lower === "pc") return "CPU";
+    if (lower === "pc") return "PC";
     if (lower === "laptop") return "Laptop";
     if (lower === "monitor") return "Monitor";
     if (lower === "teclado") return "Teclado";
@@ -183,7 +183,7 @@ export default function EquiposModal({
     }
 
     toast
-      .promise(axios.put(url, payload), {
+      .promise(axios.put(url, payload, { withCredentials: true }), {
         loading: "Guardando cambios...",
         success: (response) => {
           onItemUpdated?.();
