@@ -4,6 +4,7 @@ import { FiLock } from "react-icons/fi";
 import { CloseButton } from "../components/ui/button-close";
 import axios from "axios";
 import {toast} from "react-hot-toast";
+import {FiEye, FiEyeOff} from "react-icons/fi";
 
 const API_URL = "http://localhost:3001/api";
 
@@ -18,6 +19,7 @@ export default function NuevaPassword() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -138,7 +140,7 @@ export default function NuevaPassword() {
                     </div>
                     <input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       required
                       minLength={6}
                       value={password}
@@ -146,6 +148,19 @@ export default function NuevaPassword() {
                       className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
                       placeholder="••••••••"
                     />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      >
+                        {showPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                  </div>
                   </div>
                 </div>
 
@@ -162,7 +177,7 @@ export default function NuevaPassword() {
                     </div>
                     <input
                       id="confirmPassword"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       required
                       minLength={6}
                       value={confirmPassword}
@@ -170,6 +185,19 @@ export default function NuevaPassword() {
                       className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
                       placeholder="••••••••"
                     />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      >
+                        {showPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

@@ -698,11 +698,7 @@ Router.get("/:dispositivo/:id", async (req, res, next) => {
   else if (PERIFERICOS_MAP[dispNorm]) prefix = "periferico";
   else if (COMPONENTES_MAP[dispNorm]) prefix = "componente";
 
-  if (!prefix) {
-    return res.status(400).json({
-      message: `El tipo de dispositivo '${dispositivo}' no está registrado o mapeado válidamente en el sistema.`,
-    });
-  }
+  if (!prefix) return next();
 
   try {
     const indexId = serialIndexId(prefix, id);

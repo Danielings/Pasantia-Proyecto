@@ -6,6 +6,7 @@ import {
   FiX,
   FiMoreVertical,
   FiEye,
+  FiEyeOff,
   FiEdit,
   FiTrash2,
   FiChevronLeft,
@@ -66,6 +67,7 @@ export default function RegistroUsuarios() {
 
   const [users, setUsers] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -382,12 +384,27 @@ export default function RegistroUsuarios() {
                     <label className="block text-sm font-bold text-black mb-2">
                       Contraseña <span className="text-red-500">*</span>
                     </label>
+                    <div className="relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       {...register("password")}
                       className={getFieldProps("password").className}
                     />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      >
+                        {showPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    </div>
                     {getFieldProps("password").error && (
                       <p className="text-xs text-red-600 mt-1">
                         {getFieldProps("password").error}

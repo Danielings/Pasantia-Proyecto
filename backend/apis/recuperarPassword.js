@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import pool from "../config/bd.js";
+import db from "../config/firebase.js";
 import { env } from "../config/env.js";
 import { sendPasswordResetEmail } from "../config/mailer.js";
 
@@ -22,53 +22,44 @@ Router.post("/recuperar-password", async (req, res) => {
   const correo = email.trim().toLowerCase();
 
   try {
-    const [rows] = await pool.execute(
-      `
-      SELECT u.id_usuario, p.correo
-      FROM personas p
-      INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
-      WHERE LOWER(p.correo) = ?
-      LIMIT 1
-      `,
-      [correo],
-    );
+    const usuariosRef = db.collection("usuarios");
+    const querySnapshot = await usuariosRef.where("correo", "==", correo).limit(1).get();
 
-    if (rows.length === 0) {
+    if (querySnapshot.empty) {
       console.log("[recuperar-password] Correo no registrado:", correo);
+      return res.status(200).json({ message: GENERIC_MESSAGE });
     }
 
-    if (rows.length > 0) {
-      const { id_usuario } = rows[0];
-      console.log("[recuperar-password] Usuario encontrado, id:", id_usuario);
-      const resetToken = crypto.randomBytes(32).toString("hex");
-      const tokenExpires = new Date(Date.now() + TOKEN_EXPIRY_MS);
+    const userDoc = querySnapshot.docs[0];
+    const id_usuario = userDoc.id;
 
-      await pool.execute(
-        `
-        UPDATE usuarios
-        SET reset_token = ?, token_expires = ?
-        WHERE id_usuario = ?
-        `,
-        [resetToken, tokenExpires, id_usuario],
-      );
+    // Generar Token y fecha de expiración
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpires = new Date(Date.now() + TOKEN_EXPIRY_MS);
 
-      const frontendUrl = env("FRONTEND_URL") || "http://localhost:5173";
-      const resetLink = `${frontendUrl}/nueva-password?token=${resetToken}`;
+    // Guardar el token en el documento del usuario en Firestore
+    await usuariosRef.doc(id_usuario).update({
+      reset_token: resetToken,
+      token_expires: tokenExpires
+    });
 
-      try {
-        await sendPasswordResetEmail(rows[0].correo, resetLink);
-        console.log("[recuperar-password] Email enviado a:", rows[0].correo);
-      } catch (mailError) {
-        console.error("[recuperar-password] Error al enviar correo:", mailError.message);
-        await pool.execute(
-          `UPDATE usuarios SET reset_token = NULL, token_expires = NULL WHERE id_usuario = ?`,
-          [id_usuario],
-        );
-        return res.status(500).json({
-          message:
-            "No se pudo enviar el correo. Verifica SMTP en .env e intenta de nuevo.",
-        });
-      }
+    const frontendUrl = env("FRONTEND_URL") || "http://localhost:5173";
+    const resetLink = `${frontendUrl}/nueva-password?token=${resetToken}`;
+
+    // Enviar el correo
+    try {
+      await sendPasswordResetEmail(correo, resetLink);
+      console.log("[recuperar-password] Email enviado a:", correo);
+    } catch (mailError) {
+      console.error("[recuperar-password] Error al enviar correo:", mailError.message);
+      // Revertir si falla el correo
+      await usuariosRef.doc(id_usuario).update({
+        reset_token: null,
+        token_expires: null,
+      });
+      return res.status(500).json({
+        message: "No se pudo enviar el correo. Verifica SMTP en .env e intenta de nuevo.",
+      });
     }
 
     res.status(200).json({ message: GENERIC_MESSAGE });
@@ -88,31 +79,25 @@ Router.get("/validar-token", async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.execute(
-      `
-      SELECT id_usuario, token_expires
-      FROM usuarios
-      WHERE reset_token = ?
-      LIMIT 1
-      `,
-      [token],
-    );
+    const usuariosRef = db.collection("usuarios");
+    const querySnapshot = await usuariosRef.where("reset_token", "==", token).limit(1).get();
 
-    if (rows.length === 0) {
+    if (querySnapshot.empty) {
       return res.status(400).json({
         valid: false,
         message: "Enlace inválido o expirado.",
       });
     }
 
-    const expiresAt = new Date(rows[0].token_expires);
-    if (Number.isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
+    const userData = querySnapshot.docs[0].data();
+    const expiresAt = userData.token_expires ? userData.token_expires.toDate() : null; // Convertir a Date si es un Timestamp de Firestore
+
+    if (!expiresAt || expiresAt < new Date()) {
       return res.status(400).json({
         valid: false,
         message: "Enlace inválido o expirado.",
       });
     }
-
     res.status(200).json({ valid: true });
   } catch (e) {
     console.error("Error en validar-token:", e);
@@ -139,24 +124,20 @@ Router.post("/restablecer-password", async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.execute(
-      `
-      SELECT id_usuario, token_expires
-      FROM usuarios
-      WHERE reset_token = ?
-      LIMIT 1
-      `,
-      [token],
-    );
+    const usuariosRef = db.collection("usuarios");
+    const querySnapshot = await usuariosRef.where("reset_token", "==", token).limit(1).get();
 
-    if (rows.length === 0) {
+    if(querySnapshot.empty) {
       return res.status(400).json({
         message: "Enlace inválido o expirado.",
       });
     }
 
-    const expiresAt = new Date(rows[0].token_expires);
-    if (Number.isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+    const expiresAt = userData.token_expires ? userData.token_expires.toDate() : null; // Convertir a Date si es un Timestamp de Firestore
+
+    if (!expiresAt || expiresAt < new Date()) {
       return res.status(400).json({
         message: "Enlace inválido o expirado.",
       });
@@ -164,18 +145,13 @@ Router.post("/restablecer-password", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await pool.execute(
-      `
-      UPDATE usuarios
-      SET
-        password = ?,
-        reset_token = NULL,
-        token_expires = NULL
-      WHERE id_usuario = ?
-      `,
-      [hashedPassword, rows[0].id_usuario],
-    );
-
+    // Actualizar la contraseña y limpiar los tokens en Firestore
+    await usuariosRef.doc(userDoc.id).update({
+      password: hashedPassword,
+      reset_token: null,
+      token_expires: null,
+    });
+    
     res.status(200).json({
       message: "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
     });

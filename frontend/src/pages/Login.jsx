@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiCpu } from "react-icons/fi";
+import { FiMail, FiLock, FiCpu, FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Axios from "axios";
 import { useAuth } from "../controllers/AuthContext";
@@ -10,6 +10,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false); // Estado para feedback visual
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ correo: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -108,15 +109,28 @@ export default function Login() {
                   </div>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="pl-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
+                    className="pl-10 pr-10 block w-full border-gray-300 rounded-lg shadow-sm py-3 px-4 outline-none focus:ring-primary-500 focus:border-primary-500 border transition-all"
                     placeholder="••••••••"
                   />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                      >
+                        {showPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                  </div>
                 </div>
               </div>
 

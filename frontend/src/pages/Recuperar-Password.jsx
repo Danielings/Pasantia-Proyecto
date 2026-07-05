@@ -25,6 +25,7 @@ export default function RecuperarPassword() {
       success: (response) => {
         setEmail("");
         setLoading(false);
+        setTimeout(() => navigate("/login"), 2500);
         return response.data.message || "Correo de recuperación enviado con éxito.";
       },
       error: (err) => {

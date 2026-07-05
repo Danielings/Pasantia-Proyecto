@@ -13,6 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { availableIcons } from "../../utils/avatars";
 
 const listItems = [
   { icon: UserIcon, property: "Profile", path: "/perfil" },
@@ -27,6 +28,8 @@ export default function Header() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const [avatarId, setAvatarId] = useState(1);
+
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setMobileOpen(false);
@@ -34,6 +37,23 @@ export default function Header() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    const loadAvatar = () => {
+      const saved = user?.avatar_id || localStorage.getItem("selectedAvatarId");
+      if (saved) {
+        setAvatarId(Number(saved));
+      }
+    };
+    loadAvatar();
+
+    window.addEventListener("avatarUpdated", loadAvatar);
+    return () => window.removeEventListener("avatarUpdated", loadAvatar);
+  }, [user]);
+
+  const ActiveAvatar = availableIcons.find(icon => icon.id === avatarId);
+  const ActiveIconComponent = ActiveAvatar ? ActiveAvatar.icon : FiUser;
+  const activeIconColor = ActiveAvatar ? ActiveAvatar.color : "text-gray-400";
 
   const handleLogout = async () => {
     try {
@@ -118,12 +138,9 @@ export default function Header() {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="overflow-hidden rounded-full"
+                  className="overflow-hidden rounded-full bg-gray-100 hover:bg-gray-200"
                 >
-                  <img
-                    src="https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-5.png"
-                    alt="Avatar"
-                  />
+                  <ActiveIconComponent className={`h-5 w-5 ${activeIconColor}`} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
